@@ -43,6 +43,9 @@ function getCache($name)
     $engine = getCacheType();
     if ($engine == 'file') {
         $dir = __DIR__ . DIRECTORY_SEPARATOR . CACHE_DIR;
+        if(!is_dir($dir)){
+            @mkdir($dir);
+        }
         $raw = @file_get_contents($dir . DIRECTORY_SEPARATOR . $name . '.data');
         return unserialize($raw);
     } else if ($engine == 'redis') {
