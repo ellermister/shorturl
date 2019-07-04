@@ -5,7 +5,7 @@
 #### 体验预览
 
 待补充
-
+![preview](<https://raw.githubusercontent.com/ellermister/shorturl/master/preview.png>)
 
 
 ### 支持功能
