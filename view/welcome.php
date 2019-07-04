@@ -66,7 +66,7 @@
 
         </div>
         <div class="card-footer text-muted">
-            No referer access <br> This site generates a total of <?php echo getUrlRecordHistory(); ?>links，Currently active 1000<?php echo getUrlRecord(); ?>。
+            No referer access <br> This site generates a total of <?php echo getUrlRecordHistory(); ?>links，Currently active <?php echo getUrlRecord(); ?>。
         </div>
     </div>
 </div>
