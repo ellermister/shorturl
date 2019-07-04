@@ -2,7 +2,10 @@
 define('ROOT_PATH', __DIR__);
 define('CACHE_TYPE', 'file');// 支持REDIS OR FILE
 define('CACHE_DIR', 'cache');// FILE模式下缓存目录
+define('CACHE_EXPIRE', 3600 * 24 * 7);// 缓存时间，单位秒
 define('IS_HTTPS', false);//是否HTTPS
+define('VIEW_PATH', 'view');//视图模板目录
+define('PASS', true);// 访问许可
 
 //--- 缓存相关 ---//
 
@@ -26,7 +29,7 @@ function putCache($name, $value)
     }
 }
 
-function existsCache($name)
+function hasCache($name)
 {
     $engine = getCacheType();
     if ($engine == 'file') {
@@ -43,7 +46,7 @@ function getCache($name)
     $engine = getCacheType();
     if ($engine == 'file') {
         $dir = __DIR__ . DIRECTORY_SEPARATOR . CACHE_DIR;
-        if(!is_dir($dir)){
+        if (!is_dir($dir)) {
             @mkdir($dir);
         }
         $raw = @file_get_contents($dir . DIRECTORY_SEPARATOR . $name . '.data');
@@ -51,6 +54,30 @@ function getCache($name)
     } else if ($engine == 'redis') {
 
     }
+}
+
+function clearCache()
+{
+    $currentTime = time();
+    $count = 0;
+    $engine = getCacheType();
+    if ($engine == 'file') {
+        $dir = __DIR__ . DIRECTORY_SEPARATOR . CACHE_DIR;
+        $list = scandir($dir);
+        foreach ($list as $file) {
+            if ($file == '.' or $file == '..' or !preg_match('/^url_/i', $file))
+                continue;
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            if ($currentTime - filemtime($path) > CACHE_EXPIRE) {
+                if (preg_match('/^(url_[A-z0-9]+)\.[A-z]+$/', $file, $matches)) {
+                    $url = getCache($matches[1]);
+                    unlink($path) && $count++ && cleanUrlRecord($url);
+                    unset($url);
+                }
+            }
+        }
+    }
+    return $count;
 }
 
 //--- URL转换相关 ---//
@@ -64,31 +91,103 @@ function getRandStr($len)
     return substr($value, 0, $len);
 }
 
-function urlToHash($url)
+function urlHash()
 {
     $hash = getRandStr(5);
-    while (existsCache($hash)) {
+    while (hasCache('url_' . $hash)) {
         $hash = getRandStr(5);
     }
-    putCache($hash, $url);
+    return $hash;
+}
+
+function urlToHash($url)
+{
+    $hash = urlHash();
+    putCache('url_' . $hash, $url);
     return $hash;
 }
 
 function hashToUrl($hash)
 {
-    if (existsCache($hash)) {
-        $url = getCache($hash);
+    if (hasCache('url_' . $hash)) {
+        $url = getCache('url_' . $hash);
     }
     return $url ?? '';
 }
 
 function urlToShort($url)
 {
+    if (!preg_match('/^[A-z]+:\/\//i', $url)) {
+        $url = 'http://' . $url;
+    }
     $id = urlToHash($url);
     $shortUrl = sprintf('%s://%s/%s/%s', IS_HTTPS ? 'https' : 'http', $_SERVER['HTTP_HOST'], 's', $id);
+    addUrlRecord($url);
     return ($shortUrl);
 }
 
+function addUrlRecord($url)
+{
+    $cache = [];
+    if (hasCache('manage')) {
+        $cache = getCache('manage');
+    }
+    $cache[$url] = isset($cache[$url]) ? $cache[$url] + 1 : 1;
+    putCache('manage', $cache);
+    addUrlRecordHistory($url);
+}
+
+function getUrlRecord($url = false)
+{
+    $count = 0;
+    $cache = [];
+    if (hasCache('manage')) {
+        $cache = getCache('manage');
+    }
+    if ($url) {
+        $count += $cache[$url];
+    } else {
+        foreach ($cache as $value) {
+            $count += intval($value);
+        }
+    }
+
+    return $count;
+}
+
+function cleanUrlRecord($url = false)
+{
+    $cache = [];
+    if (hasCache('manage')) {
+        $cache = getCache('manage');
+    }
+    if ($url) {
+        unset($cache[$url]);
+    } else {
+        $cache[$url] = [];
+    }
+    putCache('manage', $cache);
+}
+
+function addUrlRecordHistory($url)
+{
+    $cache = [];
+    if (hasCache('history')) {
+        $cache = getCache('history');
+    }
+    $cache['count'] = isset($cache['count']) ? $cache['count'] + 1 : 1;
+    $cache['url'][] = $url;
+    putCache('history', $cache);
+}
+
+function getUrlRecordHistory()
+{
+    $cache = [];
+    if (hasCache('history')) {
+        $cache = getCache('history');
+    }
+    return $cache['count'] ?? 0;
+}
 
 //--- Response 相关 ---//
 
@@ -102,30 +201,62 @@ function json($msg, $code = 200, $data = [])
     return json_encode($format, JSON_UNESCAPED_UNICODE);
 }
 
+function view($name, $vars = [])
+{
+    $path = ROOT_PATH . DIRECTORY_SEPARATOR . VIEW_PATH . DIRECTORY_SEPARATOR . $name . '.php';
+    extract($vars);
+    @include $path;
+}
+
+function abort($status = 404)
+{
+    $path = ROOT_PATH . DIRECTORY_SEPARATOR . $status . '.html';
+    if (is_file($path)) {
+        @include path;
+    } else {
+        echo $status;
+    }
+    die();
+}
+
+function route($uri, Closure $_route)
+{
+    $pathInfo = $_SERVER['PATH_INFO'] ?? '/';
+    if (preg_match('#^' . $uri . '$#', $pathInfo, $matches)) {
+        $_route($matches);
+        exit(0);
+    }
+}
+
 
 //--- 入口逻辑  ---//
 $pathInfo = $_SERVER['PATH_INFO'] ?? '/';
 
-if (preg_match('/^\/s\/([A-z0-9]+)/i', $pathInfo, $matches)) {
-    //redirect
+route('/', function () {
+    view('welcome', ['time' => date('Ymd')]);
+});
+
+route("/s/([A-z0-9]+)", function ($matches) {
     $url = hashToUrl($matches[1]);
     empty($url) && $url = '/404';
     header('Location: ' . $url);
+});
 
-} elseif (preg_match('/^\/api\/([A-z0-9]+)/i', $pathInfo, $matches)) {
-    //API REQUEST
-    if ($matches[1] == 'link') {
-        $url = $_REQUEST['url'] ?? '';
-        if (empty($url)) {
-            $response = json('url不能为空', 500);
-        } else {
-            $response = urlToShort($url);
-            $response = json('ok', 200, $response);
-        }
+route('/api/link', function ($matches) {
+    $url = $_REQUEST['url'] ?? '';
+    if (empty($url)) {
+        $response = json('url不能为空', 500);
+    } else {
+        $response = urlToShort($url);
+        $response = json('生成完毕', 200, $response);
     }
-} else if (preg_match('/^\/404$/i', $pathInfo, $matches)) {
-    $response = is_file('404.html') ? file_get_contents('404.html') : '404 pages';
-} else {
-    $response = is_file('welcome.html') ? file_get_contents('welcome.html') : 'Hi!';
-}
-echo $response;
+    echo $response;
+});
+route('/api/clean', function () {
+    $count = clearCache();
+    echo json(sprintf('clean %s files', $count), 200);
+});
+
+route('/404', function () {
+    abort(404);
+});
