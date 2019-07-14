@@ -221,7 +221,8 @@ function abort($status = 404)
 
 function route($uri, Closure $_route)
 {
-    $pathInfo = $_SERVER['PATH_INFO'] ?? '/';
+    $pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
+    $pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
     if (preg_match('#^' . $uri . '$#', $pathInfo, $matches)) {
         $_route($matches);
         exit(0);
@@ -230,7 +231,8 @@ function route($uri, Closure $_route)
 
 
 //--- 入口逻辑  ---//
-$pathInfo = $_SERVER['PATH_INFO'] ?? '/';
+$pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
+$pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
 
 route('/', function () {
     view('welcome', ['time' => date('Ymd')]);
