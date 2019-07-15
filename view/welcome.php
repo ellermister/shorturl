@@ -34,11 +34,36 @@
         <div class="card-body">
             <h5 class="card-title">Quickly generate URL!</h5>
 
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label for="urlTextInput">URL</label>
                 <input type="text" id="urlTextInput" class="form-control" placeholder="Enter URL link">
-            </div>
-            
+            </div> -->
+			
+            <div class="input-group mb-3">
+			  <input type="text" id="urlTextInput" class="form-control" placeholder="Enter URL link" >
+			  <div class="input-group-append">
+				<button class="btn btn-primary" type="button" id="generate" onclick="javascript:generate()">Generate</button>
+			  </div>
+			</div>
+			<div class="mb-3">
+				<div class="custom-control custom-radio custom-control-inline">
+				  <input type="radio" id="radio-normal" name="encrypt_type" class="custom-control-input" value="normal">
+				  <label class="custom-control-label" for="radio-normal">normal</label>
+				</div>
+				<div class="custom-control custom-radio custom-control-inline">
+				  <input type="radio" id="radio-dynamic" name="encrypt_type" class="custom-control-input" value="dynamic">
+				  <label class="custom-control-label" for="radio-dynamic">no referer</label>
+				</div>
+				<div class="custom-control custom-radio custom-control-inline">
+				  <input type="radio" id="radio-encrypt" name="encrypt_type" class="custom-control-input" value="encrypt" checked="">
+				  <label class="custom-control-label" for="radio-encrypt">encrypt redirect</label>
+				</div>
+				<div class="custom-control custom-radio custom-control-inline">
+				  <input type="radio" id="radio-once" name="encrypt_type" class="custom-control-input" value="once">
+				  <label class="custom-control-label" for="radio-once">redirect once</label>
+				</div>
+			</div>
+			
             <div id="let-dialog"></div>
             
             <div class="modal" tabindex="-1" role="dialog">
@@ -61,8 +86,6 @@
 			    </div>
 			  </div>
 			</div>
-			
-            <a href="javascript:generate()" class="btn btn-primary">Generate</a>
 
         </div>
         <div class="card-footer text-muted">
@@ -102,12 +125,13 @@
 	}
     function generate(){
         let url = $('#urlTextInput').val();
+		let encrypt_type = $('input[name="encrypt_type"]:checked').val();
         $.ajax({
         	type:"post",
         	url:"/api/link",
         	async:true,
         	dataType:'json',
-        	data:{url: url},
+        	data:{url: url, encrypt_type: encrypt_type},
         	success:function(result){
         		if(result.code == 200){
         			$('#copy-text input').val(result.data);
