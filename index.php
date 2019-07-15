@@ -338,12 +338,12 @@ function redirect($url, $encrypt_type, $hash)
     if ($encrypt_type == 'normal')
         header('Location: ' . $url);
     else if ($encrypt_type == 'dynamic') {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title></head><body><script type="text/javascript">setTimeout(function(){location.href="{{url}}"},500);</script></body></html>';
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script type="text/javascript">setTimeout(function(){location.href="{{url}}"},500);</script></body></html>';
         $html = str_replace('{{title}}', 'web redirection...', $html);
         $html = str_replace('{{url}}', $url, $html);
         echo $html;
     } else if ($encrypt_type == "encrypt") {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
         $javascript = 'setTimeout(function(){location.href="{{url}}"},500);';
         $javascript = str_replace('{{url}}', $url, $javascript);
 
@@ -353,7 +353,7 @@ function redirect($url, $encrypt_type, $hash)
         $html = str_replace('{{request_id}}', $request_id, $html);
         echo $html;
     } else if ($encrypt_type == "once") {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
         $javascript = 'setTimeout(function(){location.href="{{url}}"},500);';
         $javascript = str_replace('{{url}}', $url, $javascript);
 
