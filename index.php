@@ -108,10 +108,10 @@ function urlHash()
     return $hash;
 }
 
-function urlToHash($url, $encrypt_type)
+function urlToHash($url, $encrypt_type, $extent)
 {
     $hash = urlHash();
-    putCache('url_' . $hash, ['url' => $url, 'encrypt_type' => $encrypt_type]);
+    putCache('url_' . $hash, ['url' => $url, 'encrypt_type' => $encrypt_type, 'extent' => $extent]);
     return $hash;
 }
 
@@ -123,12 +123,12 @@ function hashToUrl($hash)
     return $url ?? '';
 }
 
-function urlToShort($url, $encrypt_type = 'encrypt')
+function urlToShort($url, $encrypt_type = 'encrypt', $extent = '')
 {
     if (!preg_match('/^[A-z]+:\/\//i', $url)) {
         $url = 'http://' . $url;
     }
-    $id = urlToHash($url, $encrypt_type);
+    $id = urlToHash($url, $encrypt_type, $extent);
     $shortUrl = sprintf('%s://%s/%s/%s', IS_HTTPS ? 'https' : 'http', $_SERVER['HTTP_HOST'], 's', $id);
     addUrlRecord($url);
     return ($shortUrl);
@@ -333,7 +333,15 @@ function route($uri, Closure $_route)
     }
 }
 
-function redirect($url, $encrypt_type, $hash)
+function makeRedirectJs($url, $time = 500)
+{
+    $javascript = 'setTimeout(function(){location.href="{{url}}"},{{time}});';
+    $javascript = str_replace('{{url}}', $url, $javascript);
+    $javascript = str_replace('{{time}}', $time, $javascript);
+    return $javascript;
+}
+
+function redirect($url, $encrypt_type, $hash, $extent = '')
 {
     if ($encrypt_type == 'normal')
         header('Location: ' . $url);
@@ -344,8 +352,7 @@ function redirect($url, $encrypt_type, $hash)
         echo $html;
     } else if ($encrypt_type == "encrypt") {
         $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
-        $javascript = 'setTimeout(function(){location.href="{{url}}"},500);';
-        $javascript = str_replace('{{url}}', $url, $javascript);
+        $javascript = makeRedirectJs($url);
 
         $request_id = getRandStr(20);
         putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash]);
@@ -354,14 +361,18 @@ function redirect($url, $encrypt_type, $hash)
         echo $html;
     } else if ($encrypt_type == "once") {
         $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
-        $javascript = 'setTimeout(function(){location.href="{{url}}"},500);';
-        $javascript = str_replace('{{url}}', $url, $javascript);
+        $javascript = makeRedirectJs($url);
 
         $request_id = getRandStr(20);
         putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => 1]);
         $html = str_replace('{{title}}', 'web redirection...', $html);
         $html = str_replace('{{request_id}}', $request_id, $html);
         echo $html;
+    } else if ($encrypt_type == 'password') {
+        $request_id = getRandStr(20);
+        putCache('request_' . $request_id, ['hash' => $hash]);
+        $data = ['request_id' => $request_id];
+        view('password', $data);
     }
 }
 
@@ -372,10 +383,22 @@ function responseJavascript($requestId)
     if (empty($cache)) {
         $javascript = 'alert("Invalid request")';
     } else {
-        $javascript = $cache['js'];
+        $javascript = $cache['js'] ?? '';
     }
+
+    // 判断是否密码验证
+    $data = hashToUrl($cache['hash']);
+    if ($data['encrypt_type'] == 'password') {
+        if ($data['extent'] != $_REQUEST['password'] ?? '') {
+            echo json("密码验证失败", 500, '');
+        } else {
+            $javascript = aaEncode(makeRedirectJs($data['url']));
+            echo json('ok', 200, $javascript);
+        }
+        die;
+    }
+
     if (!empty($cache['clean'])) {
-        $data = hashToUrl($cache['hash']);
         clearCache('url_' . $cache['hash']);
         cleanUrlRecord($data['url']);
     }
@@ -398,9 +421,10 @@ route("/s/([A-z0-9]+)", function ($matches) {
     if (!empty($data['url'])) {
         $url = $data['url'];
         $encrypt_type = $data['encrypt_type'];
+        $extent = $data['extent'] ?? '';
     }
     empty($url) && $url = '/404';
-    redirect($url, $encrypt_type, $matches[1]);
+    redirect($url, $encrypt_type, $matches[1], $extent);
 });
 
 route("/request/([A-z0-9]+)", function ($matches) {
@@ -411,10 +435,11 @@ route("/request/([A-z0-9]+)", function ($matches) {
 route('/api/link', function ($matches) {
     $url = $_REQUEST['url'] ?? '';
     $encrypt_type = $_REQUEST['encrypt_type'] ?? 'normal';
+    $extent = $_REQUEST['extent'] ?? '';
     if (empty($url)) {
         $response = json('url不能为空', 500);
     } else {
-        $response = urlToShort($url, $encrypt_type);
+        $response = urlToShort($url, $encrypt_type, $extent);
         $response = json('生成完毕', 200, $response);
     }
     echo $response;
