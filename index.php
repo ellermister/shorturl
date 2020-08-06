@@ -341,6 +341,13 @@ function makeRedirectJs($url, $time = 500)
     return $javascript;
 }
 
+function makeReturnJs($code, $time = 500)
+{
+    $javascript = "(function(){return window.atob('{{code}}');})();";
+    $javascript = str_replace('{{code}}', base64_encode($code), $javascript);
+    return $javascript;
+}
+
 function redirect($url, $encrypt_type, $hash, $extent = '')
 {
     if ($encrypt_type == 'normal')
@@ -373,6 +380,11 @@ function redirect($url, $encrypt_type, $hash, $extent = '')
         putCache('request_' . $request_id, ['hash' => $hash]);
         $data = ['request_id' => $request_id];
         view('password', $data);
+    }else if ($encrypt_type == 'whisper') {
+        $request_id = getRandStr(20);
+        putCache('request_' . $request_id, ['hash' => $hash]);
+        $data = ['request_id' => $request_id];
+        view('whisper', $data);
     }
 }
 
@@ -395,7 +407,10 @@ function responseJavascript($requestId)
             $javascript = aaEncode(makeRedirectJs($data['url']));
             echo json('ok', 200, $javascript);
         }
-        die;
+
+    }else if ($data['encrypt_type'] == 'whisper') {
+        $javascript = makeReturnJs(json_encode($data));
+        echo json('ok', 200, $javascript);
     }
 
     if (!empty($cache['clean'])) {
@@ -403,7 +418,6 @@ function responseJavascript($requestId)
         cleanUrlRecord($data['url']);
     }
     clearCache($name);
-    echo $javascript;
 }
 
 
@@ -438,7 +452,9 @@ route('/api/link', function ($matches) {
     $extent = $_REQUEST['extent'] ?? '';
     if (empty($url)) {
         $response = json('url不能为空', 500);
-    } else {
+    }else if(mb_strlen($extent) > 10000){
+        $response = json('内容过多', 500);
+    }else {
         $response = urlToShort($url, $encrypt_type, $extent);
         $response = json('生成完毕', 200, $response);
     }

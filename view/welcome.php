@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>GENERATE SHORT URL</title>
     <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css" />
     <style type="text/css">
     	.hidden{display: none;}
     </style>
@@ -69,7 +70,7 @@
 				  <input type="radio" id="radio-password" name="encrypt_type" class="custom-control-input" value="password">
 				  <label class="custom-control-label" for="radio-password">password access</label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline" style="display: none;">
+				<div class="custom-control custom-radio custom-control-inline" style="display: inline-block;">
 				  <input type="radio" id="radio-whisper" name="encrypt_type" class="custom-control-input" value="whisper">
 				  <label class="custom-control-label" for="radio-whisper">whisper text</label>
 				</div>
@@ -81,7 +82,10 @@
 		    </div>
 			<div class="form-group hidden" extent="radio-whisper">
 				<label for="exampleFormControlTextarea1">whisper</label>
-				<textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                <div id="editor" style="width: 100%;height: 500px;">
+                    <!-- Tips: Editor.md can auto append a `<textarea>` tag -->
+                    <textarea id="input-whisper" style="display:none;" >### Write a message...</textarea>
+                </div>
 			</div>
 			
             <div id="let-dialog"></div>
@@ -116,8 +120,10 @@
 
 
 <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js" ></script>
+
 <script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js" ></script>
 <script type="text/html" id="tpl-alert">
 	<div class="alert alert-{{status}} alert-dismissible fade show" role="alert">
 	  <strong>{{status}}!</strong> {{message}}
@@ -127,6 +133,7 @@
 	</div>
 </script>
 <script type="text/javascript">
+    var editor = null;
 	function message(msg, status){
 		let html = $('#tpl-alert').html();
 		html = html.replace(new RegExp('{{message}}', 'g'),msg);
@@ -150,6 +157,14 @@
 		if($('[name="'+name+'"]:checked').val() == $(this).val()){
 			var id = $(this).attr('id');
 			$('[extent="'+id+'"]').show();
+			if(id == 'radio-whisper' && editor == null){
+                editor = editormd("editor", {
+                    // width: "630px",
+                    height: 630,
+                    // markdown: "xxxx",     // dynamic set Markdown text
+                    path : "https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/"  // Autoload modules mode, codemirror, marked... dependents libs path
+                });
+            }
 		}
 	});
 	
