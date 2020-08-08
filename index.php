@@ -411,8 +411,9 @@ function responseJavascript($requestId)
     }else if ($data['encrypt_type'] == 'whisper') {
         $javascript = makeReturnJs(json_encode($data));
         echo json('ok', 200, $javascript);
+    }else{
+        echo $javascript;
     }
-
     if (!empty($cache['clean'])) {
         clearCache('url_' . $cache['hash']);
         cleanUrlRecord($data['url']);
