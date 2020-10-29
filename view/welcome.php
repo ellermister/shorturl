@@ -1,6 +1,6 @@
 <?php defined('PASS') or die('unauthorized access!') ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo get_lang()?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -21,9 +21,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
-                <a class="nav-item nav-link active" href="/">GENERATE <span class="sr-only">(current)</span></a>
-                <a class="nav-item nav-link" href="https://github.com/ellermister/shorturl">GITHUB</a>
-                <a class="nav-item nav-link" href="https://github.com/ellermister">ABOUT</a>
+                <a class="nav-item nav-link active" href="/"><?php echo __('GENERATE')?> <span class="sr-only">(current)</span></a>
+                <a class="nav-item nav-link" href="https://github.com/ellermister/shorturl"><?php echo __('GITHUB')?></a>
+                <a class="nav-item nav-link" href="https://github.com/ellermister"><?php echo __('ABOUT')?></a>
             </div>
         </div>
     </nav>
@@ -33,10 +33,10 @@
 
     <div class="card text-center">
         <div class="card-header">
-            GENERATE SHORT URL
+            <?php echo __('GENERATE SHORT URL')?>
         </div>
         <div class="card-body">
-            <h5 class="card-title">Quickly generate URL!</h5>
+            <h5 class="card-title"><?php echo __('Quickly generate URL')?></h5>
 
             <!-- <div class="form-group">
                 <label for="urlTextInput">URL</label>
@@ -44,38 +44,70 @@
             </div> -->
 			
             <div class="input-group mb-3">
-			  <input type="text" id="urlTextInput" class="form-control" placeholder="Enter URL link" >
+			  <input type="text" id="urlTextInput" class="form-control" placeholder="<?php echo __('Enter URL link')?>" >
 			  <div class="input-group-append">
-				<button class="btn btn-primary" type="button" id="generate" onclick="javascript:generate()">Generate</button>
+				<button class="btn btn-primary" type="button" id="generate" onclick="javascript:generate()"><?php echo __('Generate')?></button>
 			  </div>
 			</div>
 			<div class="mb-3" id="extent-element">
-				<div class="custom-control custom-radio custom-control-inline">
-				  <input type="radio" id="radio-normal" name="encrypt_type" class="custom-control-input" value="normal">
-				  <label class="custom-control-label" for="radio-normal">normal</label>
+				<div class="custom-control custom-checkbox custom-control-inline">
+				  <input type="checkbox" id="radio-normal" name="encrypt_type" class="custom-control-input" value="normal">
+				  <label class="custom-control-label" for="radio-normal"><?php echo __('normal')?></label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline">
-				  <input type="radio" id="radio-dynamic" name="encrypt_type" class="custom-control-input" value="dynamic">
-				  <label class="custom-control-label" for="radio-dynamic">no referer</label>
+				<div class="custom-control custom-checkbox custom-control-inline">
+				  <input type="checkbox" id="radio-dynamic" name="encrypt_type" class="custom-control-input" value="dynamic">
+				  <label class="custom-control-label" for="radio-dynamic"><?php echo __('no referer')?></label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline">
-				  <input type="radio" id="radio-encrypt" name="encrypt_type" class="custom-control-input" value="encrypt" checked="">
-				  <label class="custom-control-label" for="radio-encrypt">encrypt redirect</label>
+				<div class="custom-control custom-checkbox custom-control-inline">
+				  <input type="checkbox" id="radio-encrypt" name="encrypt_type" class="custom-control-input" value="encrypt" checked="">
+				  <label class="custom-control-label" for="radio-encrypt"><?php echo __('encrypt redirect')?></label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline">
-				  <input type="radio" id="radio-once" name="encrypt_type" class="custom-control-input" value="once">
-				  <label class="custom-control-label" for="radio-once">redirect once</label>
+				<div class="custom-control custom-checkbox custom-control-inline">
+				  <input type="checkbox" id="radio-once" name="encrypt_type" class="custom-control-input" value="once">
+				  <label class="custom-control-label" for="radio-once"><?php echo __('redirect once')?></label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline" >
-				  <input type="radio" id="radio-password" name="encrypt_type" class="custom-control-input" value="password">
-				  <label class="custom-control-label" for="radio-password">password access</label>
+				<div class="custom-control custom-checkbox custom-control-inline" >
+				  <input type="checkbox" id="radio-password" name="encrypt_type" class="custom-control-input" value="password">
+				  <label class="custom-control-label" for="radio-password"><?php echo __('password access')?></label>
 				</div>
-				<div class="custom-control custom-radio custom-control-inline" style="display: inline-block;">
-				  <input type="radio" id="radio-whisper" name="encrypt_type" class="custom-control-input" value="whisper">
-				  <label class="custom-control-label" for="radio-whisper">whisper text</label>
+				<div class="custom-control custom-checkbox custom-control-inline" >
+				  <input type="checkbox" id="radio-pc-only" name="encrypt_type" class="custom-control-input" value="pc_only">
+				  <label class="custom-control-label" for="radio-pc-only"><?php echo __('PC access only')?></label>
+				</div>
+				<div class="custom-control custom-checkbox custom-control-inline" >
+				  <input type="checkbox" id="radio-pc-only" name="encrypt_type" class="custom-control-input" value="pc_only">
+				  <label class="custom-control-label" for="radio-pc-only"><?php echo __('Mobile access only')?></label>
+				</div>
+				<div class="custom-control custom-checkbox custom-control-inline" >
+				  <input type="checkbox" id="radio-china-only" name="encrypt_type" class="custom-control-input" value="china_only">
+				  <label class="custom-control-label" for="radio-china-only"><?php echo __('mainland China access only')?></label>
+				</div>
+				<div class="custom-control custom-checkbox custom-control-inline" >
+				  <input type="checkbox" id="radio-non-china-only" name="encrypt_type" class="custom-control-input" value="non_china_only">
+				  <label class="custom-control-label" for="radio-non-china-only"><?php echo __('Non-mainland China access only')?></label>
+				</div>
+				<div class="custom-control custom-checkbox custom-control-inline" style="display: inline-block;">
+				  <input type="checkbox" id="radio-whisper" name="encrypt_type" class="custom-control-input" value="whisper">
+				  <label class="custom-control-label" for="radio-whisper"><?php echo __('whisper text')?></label>
 				</div>
 			</div>
-			
+
+            <div class="card">
+                <div class="card-body text-left">
+                    <p><b> 🏄🏼‍♀️ <?php echo __('normal')?>: </b><?php echo __('Jump directly to the website')?><br>
+                        <b>🐸<?php echo __('no referer')?>: </b><?php echo __('No Referer parameter')?><br>
+                        <b>🕷 <?php echo __('encrypt redirect')?>: </b><?php echo __('Encrypted access, anti-crawler')?><br>
+                        <b>🔥 <?php echo __('redirect once')?>: </b><?php echo __('Jump only once')?><br>
+                        <b>🔑 <?php echo __('password access')?>: </b><?php echo __('Password required')?><br>
+                        <b>📝 <?php echo __('whisper text')?>: </b><?php echo __('Append rich text information')?><br>
+                        <b>💻 <?php echo __('PC access only')?>: </b><?php echo __('Only PC users can access this page')?><br>
+                        <b>📱 <?php echo __('Mobile access only')?>: </b><?php echo __('Only Mobile users can access this page')?><br>
+                        <b>🇨🇳 <?php echo __('Access only to users in mainland China')?>: </b><?php echo __('Access only to users in mainland China')?><br>
+                        <b>🗺️ <?php echo __('Only access users who are not in mainland China')?>: </b><?php echo __('Only access users who are not in mainland China')?><br>
+                    </p>
+                </div>
+            </div>
+
 			<div class="form-group hidden" extent="radio-password">
 			    <label for="input-password">Password</label>
 			    <input type="password" class="form-control" id="input-password" placeholder="Password">
@@ -113,7 +145,7 @@
 
         </div>
         <div class="card-footer text-muted">
-            No referer access <br> This site generates a total of <?php echo getUrlRecordHistory(); ?>links，Currently active <?php echo getUrlRecord(); ?>。
+            <?php echo __('This site generates a total of :url_record_history links，Currently active :url_active_history', ['url_record_history' => getUrlRecordHistory(), 'url_active_history' => getUrlRecord()])?>。
         </div>
     </div>
 </div>
