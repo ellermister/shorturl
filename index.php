@@ -652,6 +652,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
                 $encrypt_request [] = openssl_encrypt($request_id, $method, substr($mobileId,8,16), 0,$iv);
             }
             $script = "";
+            $is_middle_page = true;
         }
 
         //判断是否PC访问
@@ -662,6 +663,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
                 $encrypt_request [] = openssl_encrypt($request_id, $method, substr($pcId,8,16), 0,$iv);
             }
             $script = "";
+            $is_middle_page = true;
         }
 
 
