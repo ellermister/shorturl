@@ -696,8 +696,8 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
 
         if($is_middle_page){
             $html = $whisper;
-            putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once]);
         }
+        putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once]);
 
 
         echo $html;
