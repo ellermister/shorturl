@@ -22,22 +22,24 @@ $lang_package = [
         'normal'               => '原始',
         'no referer'           => '无Referer',
         'encrypt redirect'     => '加密跳转',
+        'Fake page'            => '伪装页面',
         'redirect once'        => '阅后即焚',
         'password access'      => '密码访问',
         'whisper text'         => '附加图文',
         'PC access only'       => '仅限PC访问',
         'Mobile access only'   => '仅限手机访问',
 
-        'Jump directly to the website'           => '直接跳转到目标网站',
-        'No Referer parameter'                   => '无 Referer 参数，目标网站无法获取来源站地址',
-        'Encrypted access, anti-crawler'         => '加密跳转参数信息，反大部分爬虫抓取探测',
-        'Jump only once'                         => '一次性跳转(阅后即焚)',
-        'Password required'                      => '将为你生成密码，访问时需要密码验证',
-        'Append rich text information'           => '附加富文本信息，您可以在此留言并分享给您的其他社交媒体用户',
-        'Only PC users can access this page'     => '仅限PC用户访问该地址',
-        'Only Mobile users can access this page' => '仅限手机用户访问该地址',
-        'mainland China access only'             => '仅限中国大陆访问',
-        'Non-mainland China access only'         => '仅限非中国大陆访问',
+        'Jump directly to the website'                                        => '直接跳转到目标网站',
+        'No Referer parameter'                                                => '无 Referer 参数，目标网站无法获取来源站地址',
+        'Encrypted access, anti-crawler'                                      => '加密跳转参数信息，反大部分爬虫抓取探测',
+        'Use random news, forums, product website information to fool robots' => '使用随机信息、论坛、商品来骗过机器人爬虫',
+        'Jump only once'                                                      => '一次性跳转(阅后即焚)',
+        'Password required'                                                   => '将为你生成密码，访问时需要密码验证',
+        'Append rich text information'                                        => '附加富文本信息，您可以在此留言并分享给您的其他社交媒体用户',
+        'Only PC users can access this page'                                  => '仅限PC用户访问该地址',
+        'Only Mobile users can access this page'                              => '仅限手机用户访问该地址',
+        'mainland China access only'                                          => '仅限中国大陆访问',
+        'Non-mainland China access only'                                      => '仅限非中国大陆访问',
 
         'Access only to users in mainland China'          => '仅限中国大陆用户访问',
         'Only access users who are not in mainland China' => '仅限非中国大陆用户访问',
@@ -55,6 +57,7 @@ $lang_package = [
         'normal'                         => 'デフォルト',
         'no referer'                     => '「Referer」パラメータなし',
         'encrypt redirect'               => '暗号化されたアクセス',
+        'Fake Page'                      => '偽のウェブページ',
         'redirect once'                  => '1回限りの訪問',
         'password access'                => 'パスワードの検証',
         'whisper text'                   => '追加テキスト',
@@ -63,14 +66,15 @@ $lang_package = [
         'mainland China access only'     => '中国本土のユーザーのみがアクセス可能',
         'Non-mainland China access only' => '中国本土以外のユーザーに限定',
 
-        'Jump directly to the website'           => 'ターゲットのWebサイトに直接ジャンプします',
-        'No Referer parameter'                   => '「Referer」パラメータがないと、ターゲットWebサイトは送信元ステーションのアドレスを取得できません',
-        'Encrypted access, anti-crawler'         => '暗号化されたジャンプパラメータ情報、ほとんどのクローラーの検出防止',
-        'Jump only once'                         => 'リンクには一度しかアクセスできず、非常に安全です',
-        'Password required'                      => 'リンクのパスワードを生成し、アクセス時に確認します',
-        'Append rich text information'           => 'テキストメッセージを残すことができます',
-        'Only PC users can access this page'     => 'このアドレスにアクセスできるのはPCユーザーのみです',
-        'Only Mobile users can access this page' => 'このアドレスにアクセスできるのは携帯電話ユーザーのみです',
+        'Jump directly to the website'                                        => 'ターゲットのWebサイトに直接ジャンプします',
+        'No Referer parameter'                                                => '「Referer」パラメータがないと、ターゲットWebサイトは送信元ステーションのアドレスを取得できません',
+        'Encrypted access, anti-crawler'                                      => '暗号化されたジャンプパラメータ情報、ほとんどのクローラーの検出防止',
+        'Use random news, forums, product website information to fool robots' => 'ロボットを欺くためにランダムなニュース、フォーラム、製品のウェブサイト情報を生成する',
+        'Jump only once'                                                      => 'リンクには一度しかアクセスできず、非常に安全です',
+        'Password required'                                                   => 'リンクのパスワードを生成し、アクセス時に確認します',
+        'Append rich text information'                                        => 'テキストメッセージを残すことができます',
+        'Only PC users can access this page'                                  => 'このアドレスにアクセスできるのはPCユーザーのみです',
+        'Only Mobile users can access this page'                              => 'このアドレスにアクセスできるのは携帯電話ユーザーのみです',
 
         'Access only to users in mainland China'          => '中国本土のユーザーのみがアクセス可能',//このウェブサイトは中国本土でのみアクセスできます
         'Only access users who are not in mainland China' => '中国本土以外のユーザーに限定',
@@ -210,6 +214,14 @@ function urlHash()
     return $hash;
 }
 
+/**
+ * 映射URL和HASH关系
+ *
+ * @param $url
+ * @param $encrypt_type
+ * @param $extent
+ * @return bool|string
+ */
 function urlToHash($url, $encrypt_type, $extent)
 {
     $hash = urlHash();
@@ -217,6 +229,12 @@ function urlToHash($url, $encrypt_type, $extent)
     return $hash;
 }
 
+/**
+ * 从HASH中还原URL
+ *
+ * @param $hash
+ * @return mixed|string
+ */
 function hashToUrl($hash)
 {
     if (hasCache('url_' . $hash)) {
@@ -225,6 +243,14 @@ function hashToUrl($hash)
     return $url ?? '';
 }
 
+/**
+ * URL转短链接
+ *
+ * @param $url
+ * @param string $encrypt_type
+ * @param string $extent
+ * @return string
+ */
 function urlToShort($url, $encrypt_type = 'encrypt', $extent = '')
 {
     if (!preg_match('/^[A-z]+:\/\//i', $url)) {
@@ -236,6 +262,11 @@ function urlToShort($url, $encrypt_type = 'encrypt', $extent = '')
     return ($shortUrl);
 }
 
+/**
+ * 自增统计URL生成次数
+ *
+ * @param $url
+ */
 function addUrlRecord($url)
 {
     $cache = [];
@@ -279,6 +310,11 @@ function cleanUrlRecord($url = false)
     putCache('manage', $cache);
 }
 
+/**
+ * 自增统计URL历史生成次数
+ *
+ * @param $url
+ */
 function addUrlRecordHistory($url)
 {
     $cache = [];
@@ -395,6 +431,42 @@ function aaEncode($javascript)
 
 }
 
+//--- IP 段相关 ---//
+
+/**
+ * 判断IP是否大陆
+ * https://raw.githubusercontent.com/ym/chnroutes2/master/chnroutes.txt 下载与根目录
+ *
+ * @param $ip
+ * @return bool
+ */
+function ip_is_china($ip)
+{
+    $path = ROOT_PATH.'/chnroutes.txt';
+    if(is_file($path)){
+        $ipInt = ip2long($ip);
+        $fh = fopen($path,'r') or exit("Unable to open file chnroutes.txt !");;
+        while(!feof($fh)){
+            $ipSegment = fgets($fh);
+            if(substr($ipSegment,0,1)=='#'){
+                unset($ipSegment);
+                continue;
+            }
+            list($ipBegin, $type) = explode('/', $ipSegment);
+            $ipBegin = ip2long($ipBegin);
+            $mask = 0xFFFFFFFF << (32 - intval($type));
+            if (intval($ipInt & $mask) == intval($ipBegin & $mask)) {
+                unset($raw);
+                fclose($fh);
+                return true;
+            }
+            unset($raw);
+        }
+        fclose($fh);
+    }
+    return false;
+}
+
 //--- Response 相关 ---//
 
 function json($msg, $code = 200, $data = [])
@@ -450,43 +522,185 @@ function makeReturnJs($code, $time = 500)
     return $javascript;
 }
 
-function redirect($url, $encrypt_type, $hash, $extent = '')
+/**
+ * 获取随机假页面
+ * @return string
+ */
+function getFakePage()
 {
-    if ($encrypt_type == 'normal')
+    $url_list = [
+//        'https://item.jd.com/10000' . (str_pad(rand(0, 9999999), 7, '0')) . '.html',
+        'https://item.jd.com/100007460214.html',
+    ];
+    $url = $url_list[rand(0, count($url_list) - 1)];
+
+    $path = ROOT_PATH . DIRECTORY_SEPARATOR  . '/cache/html_'.md5($url);
+    if(!is_file($path)){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 500);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $res = curl_exec($ch);
+        curl_close($ch);
+        file_put_contents($path, $res);
+    }else{
+        $res = file_get_contents($path);
+    }
+    return $res;
+}
+
+/**
+ * 给访客响应短链接跳转
+ * @param string $url
+ * @param array $encrypt_type
+ * @param string $hash
+ * @param array $extent
+ */
+function redirect($url, array $encrypt_type, $hash, array $extent = [])
+{
+    if (in_array('normal', $encrypt_type))
         header('Location: ' . $url);
-    else if ($encrypt_type == 'dynamic') {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script type="text/javascript">setTimeout(function(){location.href="{{url}}"},500);</script></body></html>';
-        $html = str_replace('{{title}}', 'web redirection...', $html);
+    else {
+        // no referer 默认必须附加
+        $referer = "";
+        $once = false;// 是否一次访问
+        $script = '<script type="text/javascript">setTimeout(function(){location.href="{{url}}"},500);</script>';
+        $title = 'web redirection...';
+        $request_id = getRandStr(20);
+        $page_html = "";
+        $is_auth = false;
+        $is_middle_page = false;
+        if (in_array('dynamic', $encrypt_type)) {
+            $referer = '<meta name="referrer" content="no-referrer" />';
+        }
+
+        // 判断是否一次访问(一次访问必须为异步加载，否则由于网速慢或者访客多次刷新导致错误计算)
+        if (in_array('once', $encrypt_type)) {
+            $once = true;
+        }
+
+        //判断是否需要加密
+        $javascript = "";
+        if (in_array('encrypt', $encrypt_type)) {
+            $script = '<script src="/request/{{request_id}}" type="text/javascript" charset="utf-8"></script>';
+            $javascript = makeRedirectJs($url);
+            $script = str_replace('{{request_id}}', $request_id, $script);
+        }
+
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title>{{referer}}</head><body>{{script}}</body></html>';
+        $html = str_replace('{{title}}', $title, $html);
+        $html = str_replace('{{referer}}', $referer, $html);
+        $html = str_replace('{{script}}', $script, $html);
         $html = str_replace('{{url}}', $url, $html);
-        echo $html;
-    } else if ($encrypt_type == "encrypt") {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
-        $javascript = makeRedirectJs($url);
 
-        $request_id = getRandStr(20);
-        putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash]);
-        $html = str_replace('{{title}}', 'web redirection...', $html);
-        $html = str_replace('{{request_id}}', $request_id, $html);
-        echo $html;
-    } else if ($encrypt_type == "once") {
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>{{title}}</title><meta name="referrer" content="no-referrer" /></head><body><script src="/request/{{request_id}}"type="text/javascript"charset="utf-8"></script></body></html>';
-        $javascript = makeRedirectJs($url);
+        //判断是否需要密码访问
+        if (in_array('password', $encrypt_type)) {
+            // 密码访问则清空script，否则会跳转
+            $script = '';
+            $is_auth = true;
+            $is_middle_page = true;
+        }
 
-        $request_id = getRandStr(20);
-        putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => 1]);
-        $html = str_replace('{{title}}', 'web redirection...', $html);
-        $html = str_replace('{{request_id}}', $request_id, $html);
-        echo $html;
-    } else if ($encrypt_type == 'password') {
-        $request_id = getRandStr(20);
-        putCache('request_' . $request_id, ['hash' => $hash]);
-        $data = ['request_id' => $request_id];
-        view('password', $data);
-    } else if ($encrypt_type == 'whisper') {
-        $request_id = getRandStr(20);
-        putCache('request_' . $request_id, ['hash' => $hash]);
-        $data = ['request_id' => $request_id];
+        //判断是否需要附加图文
+        $whisper = $whisper_head = $whisper_body = '';
+        if (in_array('whisper', $encrypt_type)) {
+            // 图文则清空script，否则会跳转
+            $script = '';
+            $is_middle_page = true;
+        }
+        //判断是否仅限大陆访问
+        if(in_array('china_only',$encrypt_type)){
+            $ip = $_SERVER['REMOTE_ADDR'];
+            if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+                $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+            }
+            if(!ip_is_china($ip)){
+                exit('仅允许大陆IP访问');
+            }
+        }
+
+        //判断是否仅限非大陆访问
+        if(in_array('non_china_only',$encrypt_type)){
+            $ip = $_SERVER['REMOTE_ADDR'];
+            if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+                $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+            }
+            if(ip_is_china($ip)){
+                exit('仅允许非大陆IP访问');
+            }
+        }
+
+        $iv = 'fb57789c1a994622';
+        $mobile_list = array (
+            0 => 'bf04f7f36555cb565f4ffd92a2361e7c',
+            1 => '867e57bd062c7169995dc03cc0541c19',
+            2 => 'd3cd8888c2c901914e06c8a19e440cc4',
+        );
+        $pc_list = array (
+            0 => '4c8be35e5fe3d8471f378a69f74c0ab6',
+            1 => 'a99913111481b4f0bcb70e08e3e99405',
+            2 => '615c44ade81b52dff685ad7e4add7010',
+        );
+        $encrypt_request = [];
+        // 判断是否手机访问
+        if(in_array('mobile_only', $encrypt_type)){
+            $method = 'AES-128-CBC';//加密方法
+            $encrypt_request = [];
+            foreach ($mobile_list as $mobileId){
+                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($mobileId,8,16), 0,$iv);
+            }
+            $script = "";
+        }
+
+        //判断是否PC访问
+        if(in_array('pc_only', $encrypt_type)){
+            $method = 'AES-128-CBC';//加密方法
+            $encrypt_request = [];
+            foreach ($pc_list as $pcId){
+                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($pcId,8,16), 0,$iv);
+            }
+            $script = "";
+        }
+
+
+        // 默认均需要展示此页面
+        ob_start();
+        $data = ['request_id' => $request_id, 'is_auth' => $is_auth, 'encrypt_request' => implode(',',$encrypt_request)];
         view('whisper', $data);
+        $whisper = ob_get_clean();
+        if(preg_match('#<head>(.*?)<\/head>#is', $whisper,$matches)){
+            $whisper_head = $matches[1];
+        }
+        if(preg_match('#<body>(.*?)<\/body>#is', $whisper,$matches)){
+            $whisper_body = $matches[1];
+        }
+
+        //判断是否需要伪装页面
+        if (in_array('fake_page', $encrypt_type)) {
+            $page_html = getFakePage();
+            // 清空jquery
+            $page_html = preg_replace('#<script[^(src)]+src=".*?jquery.*?"[^>]*>[^<]*</script>#is','',$page_html);
+
+            $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function($matches) use($referer,$script,$whisper_head){
+                $whisper_head = preg_replace('#<title>.*?</title>#is', '', $whisper_head);// 清空title
+                return "<head>{$referer}\n{$script}\n{$whisper_head}\n{$matches[1]}</head>";
+            },$page_html);
+            $page_html = preg_replace_callback('#<body[^>]+>(.*?)<\/body>#is', function($matches) use($referer,$script,$whisper_body){
+                return "<body>{$whisper_body}\n{$matches[1]}</body>";
+            },$page_html);
+            $whisper = $page_html;
+            $is_middle_page = true;
+        }
+
+        if($is_middle_page){
+            $html = $whisper;
+            putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once]);
+        }
+
+
+        echo $html;
     }
 }
 
@@ -494,6 +708,7 @@ function responseJavascript($requestId)
 {
     $name = 'request_' . $requestId;
     $cache = getCache($name);
+    $is_middle_page = false;
     if (empty($cache)) {
         $javascript = 'alert("Invalid request")';
     } else {
@@ -502,21 +717,32 @@ function responseJavascript($requestId)
 
     // 判断是否密码验证
     $data = hashToUrl($cache['hash']);
-    if ($data['encrypt_type'] == 'password') {
-        if ($data['extent'] != $_REQUEST['password'] ?? '') {
-            echo json("密码验证失败", 500, '');
+    if(!is_array($data)){
+        return;
+    }
+    if (in_array('password',$data['encrypt_type'])) {
+        if ($data['extent']['password'] != $_REQUEST['password'] ?? '') {
+            echo json("密码验证失败", 500, '');exit;
         } else {
             $javascript = aaEncode(makeRedirectJs($data['url']));
-            echo json('ok', 200, $javascript);
         }
 
-    } else if ($data['encrypt_type'] == 'whisper') {
+        $is_middle_page = true;
+
+}
+    if (in_array('whisper',$data['encrypt_type'])) {
         $javascript = makeReturnJs(json_encode($data));
+        $is_middle_page = true;
+    }
+
+    // 判断是否需要中间页面
+    if($is_middle_page){
         echo json('ok', 200, $javascript);
-    } else {
+    }else{
         echo $javascript;
     }
-    if (!empty($cache['clean'])) {
+
+    if (isset($cache['clean']) && $cache['clean'] == true) {
         clearCache('url_' . $cache['hash']);
         cleanUrlRecord($data['url']);
     }
@@ -534,11 +760,13 @@ route('/', function () {
 
 route("/s/([A-z0-9]+)", function ($matches) {
     $data = hashToUrl($matches[1]);
-    $encrypt_type = 'normal';
+    // 直接重定向
+    $encrypt_type = ['normal'];
+    $extent = [];
     if (!empty($data['url'])) {
         $url = $data['url'];
         $encrypt_type = $data['encrypt_type'];
-        $extent = $data['extent'] ?? '';
+        $extent = $data['extent'] ?? [];
     }
     empty($url) && $url = '/404';
     redirect($url, $encrypt_type, $matches[1], $extent);
@@ -551,14 +779,17 @@ route("/request/([A-z0-9]+)", function ($matches) {
 
 route('/api/link', function ($matches) {
     $url = $_REQUEST['url'] ?? '';
-    $encrypt_type = $_REQUEST['encrypt_type'] ?? 'normal';
-    $extent = $_REQUEST['extent'] ?? '';
-    if (empty($url)) {
+    $encrypt_type = $_REQUEST['encrypt_type'] ?? '["normal"]';
+    $extent = $_REQUEST['extent'] ?? '[]';
+    if (null == ($encrypt_type = json_decode($encrypt_type, true))) {
+        $response = json('encrypt_type 参数不正确', 500);
+    } else if (empty($url)) {
         $response = json('url不能为空', 500);
     } else if (mb_strlen($extent) > 10000) {
         $response = json('内容过多', 500);
     } else {
-        $response = urlToShort($url, $encrypt_type, $extent);
+        $extent = json_decode($extent ,true);
+        $response = urlToShort($url, $encrypt_type, $extent ?? []);
         $response = json('生成完毕', 200, $response);
     }
     echo $response;

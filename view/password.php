@@ -46,7 +46,8 @@
 		let password = $('#input-password').val();
 		$.get('/request/'+hash, {password:password}, function(ret){
 			if(ret.code == 200){
-				eval(ret.data);
+				let a = eval(ret.data);
+				console.log(a);
 			}else{
 				alert(ret.msg);
 			}
