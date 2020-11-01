@@ -669,7 +669,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
 
         // 默认均需要展示此页面
         ob_start();
-        $data = ['request_id' => $request_id, 'is_auth' => $is_auth, 'encrypt_request' => implode(',',$encrypt_request)];
+        $data = ['request_id' => $request_id, 'is_auth' => $is_auth, 'encrypt_request' => implode(',', $encrypt_request), "is_middle_page" => $is_middle_page];
         view('whisper', $data);
         $whisper = ob_get_clean();
         if(preg_match('#<head>(.*?)<\/head>#is', $whisper,$matches)){

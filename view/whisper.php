@@ -92,7 +92,10 @@
                 document.write('该链接只能通过手机移动设备访问');
             },500);
         }else{
-             document.write('<script src="/request/'+hash+'" type="text/javascript" charset="utf-8">\<\/script>');
+            <?php if(!$is_middle_page){?>
+            document.write('<script src="/request/'+hash+'" type="text/javascript" charset="utf-8">\<\/script>');
+            <?php }?>
+
         }
     })();
 <?php } ?>
