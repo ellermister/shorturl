@@ -45,6 +45,13 @@ $lang_package = [
         'Only access users who are not in mainland China' => '仅限非中国大陆用户访问',
 
         'This site generates a total of :url_record_history links，Currently active :url_active_history' => '当前站点历史生成链接:url_record_history个，当前有效:url_active_history个',
+
+        'Password verification failed'                  => '密码验证失败',
+        'Wrong encode_type parameter'                   => '错误的 encode_type 参数',
+        'url cannot be empty'                           => 'URL不能为空',
+        'Too much content'                              => '内容太多',
+        'Link created successfully'                     => '链接创建成功',
+        'Links can only be accessed via mobile devices' => '该链接只能通过手机移动设备访问',
     ],
     'ja' => [
         'GENERATE'                       => '生成',
@@ -80,6 +87,13 @@ $lang_package = [
         'Only access users who are not in mainland China' => '中国本土以外のユーザーに限定',
 
         'This site generates a total of :url_record_history links，Currently active :url_active_history' => '現在のサイト履歴生成リンク:url_record_historyつのリンク、現在有効:url_active_historyつのリンク',
+
+        'Password verification failed'                  => 'パスワードの確認に失敗しました',
+        'Wrong encode_type parameter'                   => '間違ったencode_typeパラメータ',
+        'url cannot be empty'                           => 'URLを空にすることはできません',
+        'Too much content'                              => 'コンテンツが多すぎます',
+        'Link created successfully'                     => 'リンクが正常に作成されました',
+        'Links can only be accessed via mobile devices' => 'リンクにはモバイルデバイス経由でのみアクセスできます',
     ]
 ];
 
@@ -442,13 +456,13 @@ function aaEncode($javascript)
  */
 function ip_is_china($ip)
 {
-    $path = ROOT_PATH.'/chnroutes.txt';
-    if(is_file($path)){
+    $path = ROOT_PATH . '/chnroutes.txt';
+    if (is_file($path)) {
         $ipInt = ip2long($ip);
-        $fh = fopen($path,'r') or exit("Unable to open file chnroutes.txt !");;
-        while(!feof($fh)){
+        $fh = fopen($path, 'r') or exit("Unable to open file chnroutes.txt !");;
+        while (!feof($fh)) {
             $ipSegment = fgets($fh);
-            if(substr($ipSegment,0,1)=='#'){
+            if (substr($ipSegment, 0, 1) == '#') {
                 unset($ipSegment);
                 continue;
             }
@@ -534,8 +548,8 @@ function getFakePage()
     ];
     $url = $url_list[rand(0, count($url_list) - 1)];
 
-    $path = ROOT_PATH . DIRECTORY_SEPARATOR  . '/cache/html_'.md5($url);
-    if(!is_file($path)){
+    $path = ROOT_PATH . DIRECTORY_SEPARATOR . '/cache/html_' . md5($url);
+    if (!is_file($path)) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_TIMEOUT, 500);
@@ -545,7 +559,7 @@ function getFakePage()
         $res = curl_exec($ch);
         curl_close($ch);
         file_put_contents($path, $res);
-    }else{
+    } else {
         $res = file_get_contents($path);
     }
     return $res;
@@ -611,56 +625,56 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
             $is_middle_page = true;
         }
         //判断是否仅限大陆访问
-        if(in_array('china_only',$encrypt_type)){
+        if (in_array('china_only', $encrypt_type)) {
             $ip = $_SERVER['REMOTE_ADDR'];
-            if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
                 $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
             }
-            if(!ip_is_china($ip)){
-                exit('仅允许大陆IP访问');
+            if (!ip_is_china($ip)) {
+                exit(__('Access only to users in mainland China'));
             }
         }
 
         //判断是否仅限非大陆访问
-        if(in_array('non_china_only',$encrypt_type)){
+        if (in_array('non_china_only', $encrypt_type)) {
             $ip = $_SERVER['REMOTE_ADDR'];
-            if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
                 $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
             }
-            if(ip_is_china($ip)){
-                exit('仅允许非大陆IP访问');
+            if (ip_is_china($ip)) {
+                exit(__('Only access users who are not in mainland China'));
             }
         }
 
         $iv = 'fb57789c1a994622';
-        $mobile_list = array (
+        $mobile_list = array(
             0 => 'bf04f7f36555cb565f4ffd92a2361e7c',
             1 => '867e57bd062c7169995dc03cc0541c19',
             2 => 'd3cd8888c2c901914e06c8a19e440cc4',
         );
-        $pc_list = array (
+        $pc_list = array(
             0 => '4c8be35e5fe3d8471f378a69f74c0ab6',
             1 => 'a99913111481b4f0bcb70e08e3e99405',
             2 => '615c44ade81b52dff685ad7e4add7010',
         );
         $encrypt_request = [];
         // 判断是否手机访问
-        if(in_array('mobile_only', $encrypt_type)){
+        if (in_array('mobile_only', $encrypt_type)) {
             $method = 'AES-128-CBC';//加密方法
             $encrypt_request = [];
-            foreach ($mobile_list as $mobileId){
-                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($mobileId,8,16), 0,$iv);
+            foreach ($mobile_list as $mobileId) {
+                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($mobileId, 8, 16), 0, $iv);
             }
             $script = "";
             $is_middle_page = true;
         }
 
         //判断是否PC访问
-        if(in_array('pc_only', $encrypt_type)){
+        if (in_array('pc_only', $encrypt_type)) {
             $method = 'AES-128-CBC';//加密方法
             $encrypt_request = [];
-            foreach ($pc_list as $pcId){
-                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($pcId,8,16), 0,$iv);
+            foreach ($pc_list as $pcId) {
+                $encrypt_request [] = openssl_encrypt($request_id, $method, substr($pcId, 8, 16), 0, $iv);
             }
             $script = "";
             $is_middle_page = true;
@@ -672,10 +686,10 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
         $data = ['request_id' => $request_id, 'is_auth' => $is_auth, 'encrypt_request' => implode(',', $encrypt_request), "is_middle_page" => $is_middle_page];
         view('whisper', $data);
         $whisper = ob_get_clean();
-        if(preg_match('#<head>(.*?)<\/head>#is', $whisper,$matches)){
+        if (preg_match('#<head>(.*?)<\/head>#is', $whisper, $matches)) {
             $whisper_head = $matches[1];
         }
-        if(preg_match('#<body>(.*?)<\/body>#is', $whisper,$matches)){
+        if (preg_match('#<body>(.*?)<\/body>#is', $whisper, $matches)) {
             $whisper_body = $matches[1];
         }
 
@@ -683,20 +697,20 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
         if (in_array('fake_page', $encrypt_type)) {
             $page_html = getFakePage();
             // 清空jquery
-            $page_html = preg_replace('#<script[^(src)]+src=".*?jquery.*?"[^>]*>[^<]*</script>#is','',$page_html);
+            $page_html = preg_replace('#<script[^(src)]+src=".*?jquery.*?"[^>]*>[^<]*</script>#is', '', $page_html);
 
-            $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function($matches) use($referer,$script,$whisper_head){
+            $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function ($matches) use ($referer, $script, $whisper_head) {
                 $whisper_head = preg_replace('#<title>.*?</title>#is', '', $whisper_head);// 清空title
                 return "<head>{$referer}\n{$script}\n{$whisper_head}\n{$matches[1]}</head>";
-            },$page_html);
-            $page_html = preg_replace_callback('#<body[^>]+>(.*?)<\/body>#is', function($matches) use($referer,$script,$whisper_body){
+            }, $page_html);
+            $page_html = preg_replace_callback('#<body[^>]+>(.*?)<\/body>#is', function ($matches) use ($referer, $script, $whisper_body) {
                 return "<body>{$whisper_body}\n{$matches[1]}</body>";
-            },$page_html);
+            }, $page_html);
             $whisper = $page_html;
             $is_middle_page = true;
         }
 
-        if($is_middle_page){
+        if ($is_middle_page) {
             $html = $whisper;
         }
         putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once]);
@@ -719,28 +733,29 @@ function responseJavascript($requestId)
 
     // 判断是否密码验证
     $data = hashToUrl($cache['hash']);
-    if(!is_array($data)){
+    if (!is_array($data)) {
         return;
     }
-    if (in_array('password',$data['encrypt_type'])) {
+    if (in_array('password', $data['encrypt_type'])) {
         if ($data['extent']['password'] != $_REQUEST['password'] ?? '') {
-            echo json("密码验证失败", 500, '');exit;
+            echo json(__("Password verification failed"), 500, '');
+            exit;
         } else {
             $javascript = aaEncode(makeRedirectJs($data['url']));
         }
 
         $is_middle_page = true;
 
-}
-    if (in_array('whisper',$data['encrypt_type'])) {
+    }
+    if (in_array('whisper', $data['encrypt_type'])) {
         $javascript = makeReturnJs(json_encode($data));
         $is_middle_page = true;
     }
 
     // 判断是否需要中间页面
-    if($is_middle_page){
+    if ($is_middle_page) {
         echo json('ok', 200, $javascript);
-    }else{
+    } else {
         echo $javascript;
     }
 
@@ -784,15 +799,15 @@ route('/api/link', function ($matches) {
     $encrypt_type = $_REQUEST['encrypt_type'] ?? '["normal"]';
     $extent = $_REQUEST['extent'] ?? '[]';
     if (null == ($encrypt_type = json_decode($encrypt_type, true))) {
-        $response = json('encrypt_type 参数不正确', 500);
+        $response = json(__('Wrong encode_type parameter'), 500);
     } else if (empty($url)) {
-        $response = json('url不能为空', 500);
+        $response = json(__('url cannot be empty'), 500);
     } else if (mb_strlen($extent) > 10000) {
-        $response = json('内容过多', 500);
+        $response = json(__('Too much content'), 500);
     } else {
-        $extent = json_decode($extent ,true);
+        $extent = json_decode($extent, true);
         $response = urlToShort($url, $encrypt_type, $extent ?? []);
-        $response = json('生成完毕', 200, $response);
+        $response = json(__('Link created successfully'), 200, $response);
     }
     echo $response;
 });
