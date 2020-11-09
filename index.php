@@ -651,6 +651,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
             0 => 'bf04f7f36555cb565f4ffd92a2361e7c',
             1 => '867e57bd062c7169995dc03cc0541c19',
             2 => 'd3cd8888c2c901914e06c8a19e440cc4',
+            2 => '820d75c403bc050dfd71763759c9bad5',
         );
         $pc_list = array(
             0 => '4c8be35e5fe3d8471f378a69f74c0ab6',
