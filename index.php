@@ -700,7 +700,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
             $page_html = preg_replace('#<script[^(src)]+src=".*?jquery.*?"[^>]*>[^<]*</script>#is', '', $page_html);
 
             //清空手机端跳转判断
-            $page_html = preg_replace('#jump_mobile\(\);?#is','', $page_html);
+            $page_html = preg_replace('#jump_mobile\(\);#is','', $page_html);
 
             $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function ($matches) use ($referer, $script, $whisper_head) {
                 $whisper_head = preg_replace('#<title>.*?</title>#is', '', $whisper_head);// 清空title
