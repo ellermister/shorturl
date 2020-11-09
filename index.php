@@ -754,6 +754,14 @@ function responseJavascript($requestId)
         $javascript = makeReturnJs(json_encode($data));
         $is_middle_page = true;
     }
+    if (in_array('mobile_only', $data['encrypt_type'])) {
+        $javascript = makeReturnJs(json_encode($data));
+        $is_middle_page = true;
+    }
+    if (in_array('pc_only', $data['encrypt_type'])) {
+        $javascript = makeReturnJs(json_encode($data));
+        $is_middle_page = true;
+    }
 
     // 判断是否需要中间页面
     if ($is_middle_page) {

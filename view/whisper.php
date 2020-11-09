@@ -130,8 +130,12 @@
             $.get('/request/' + hash, {}, function (ret) {
                 if (ret.code == 200) {
                     let data = JSON.parse(eval(ret.data));
-                    $('#detail-link').attr('href', data.url);
-                    showMarkdown(data.extent.whisper);
+                    if (data.encrypt_type.indexOf('whisper') != -1) {
+                        $('#detail-link').attr('href', data.url);
+                        showMarkdown(data.extent.whisper);
+                    } else {
+                        location.href = data.url;
+                    }
                 } else {
                     alert(ret.msg);
                 }
