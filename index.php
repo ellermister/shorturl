@@ -1,6 +1,10 @@
 <?php
 define('ROOT_PATH', __DIR__);
 define('CACHE_TYPE', 'file');// 支持REDIS OR FILE
+define('CACHE_REDIS_KEY', '');// REDIS AUTH KEY
+define('CACHE_REDIS_HOST', '127.0.0.1');
+define('CACHE_REDIS_PORT', 6379);
+define('CACHE_REDIS_PREFIX', 'shorturl:');
 define('CACHE_DIR', 'cache');// FILE模式下缓存目录
 define('CACHE_EXPIRE', 3600 * 24 * 7);// 缓存时间，单位秒
 define('IS_HTTPS', false);//是否HTTPS
@@ -49,6 +53,7 @@ $lang_package = [
         'Password verification failed'                  => '密码验证失败',
         'Wrong encode_type parameter'                   => '错误的 encode_type 参数',
         'url cannot be empty'                           => 'URL不能为空',
+        'Too long url'                                  => 'URL太长',
         'Too much content'                              => '内容太多',
         'Link created successfully'                     => '链接创建成功',
         'Links can only be accessed via mobile devices' => '该链接只能通过手机移动设备访问',
@@ -91,6 +96,7 @@ $lang_package = [
         'Password verification failed'                  => 'パスワードの確認に失敗しました',
         'Wrong encode_type parameter'                   => '間違ったencode_typeパラメータ',
         'url cannot be empty'                           => 'URLを空にすることはできません',
+        'Too long url'                                  => 'URLが長すぎます',
         'Too much content'                              => 'コンテンツが多すぎます',
         'Link created successfully'                     => 'リンクが正常に作成されました',
         'Links can only be accessed via mobile devices' => 'リンクにはモバイルデバイス経由でのみアクセスできます',
@@ -138,14 +144,26 @@ function getCacheType()
     return strtolower($engine);
 }
 
-function putCache($name, $value)
+function getRedisConnect()
+{
+    $redis = new \Redis();
+    $redis->connect(CACHE_REDIS_HOST,CACHE_REDIS_PORT);
+    CACHE_REDIS_KEY && $redis->auth(CACHE_REDIS_KEY);
+    if($redis->isConnected()){
+        return $redis;
+    }
+    throw new RuntimeException("Redis 连接失败!",);
+}
+
+function putCache($name, $value, $timeout = null)
 {
     $engine = getCacheType();
     if ($engine == 'file') {
         $dir = __DIR__ . DIRECTORY_SEPARATOR . CACHE_DIR;
         file_put_contents($dir . DIRECTORY_SEPARATOR . $name . '.data', serialize($value));
     } else if ($engine == 'redis') {
-
+        $redis = getRedisConnect();
+        $redis->set(CACHE_REDIS_PREFIX.$name, json_encode($value), $timeout);
     }
 }
 
@@ -156,7 +174,8 @@ function hasCache($name)
         $dir = __DIR__ . DIRECTORY_SEPARATOR . CACHE_DIR;
         return is_file($dir . DIRECTORY_SEPARATOR . $name . '.data');
     } else if ($engine == 'redis') {
-
+        $redis = getRedisConnect();
+        return $redis->exists(CACHE_REDIS_PREFIX.$name);
     }
     return false;
 }
@@ -172,7 +191,8 @@ function getCache($name)
         $raw = @file_get_contents($dir . DIRECTORY_SEPARATOR . $name . '.data');
         return unserialize($raw);
     } else if ($engine == 'redis') {
-
+        $redis = getRedisConnect();
+        return json_decode($redis->get(CACHE_REDIS_PREFIX.$name),true);
     }
 }
 
@@ -204,6 +224,21 @@ function clearCache($name = null)
             @unlink($path);
         }
 
+    }else if($engine == 'redis'){
+        $redis = getRedisConnect();
+        if ($name != null){
+            $redis->del(CACHE_REDIS_PREFIX.$name);
+            $count++;
+        }else{
+            $iterator = null;
+            while($list = $redis->scan($iterator, CACHE_REDIS_PREFIX.'*', 200)){
+                $chunk_keys = array_chunk($list, 50);
+                foreach ($chunk_keys as $keys){
+                    $redis->del(...$keys);
+                    $count+= count($keys);
+                }
+            }
+        }
     }
     return $count;
 }
@@ -556,6 +591,7 @@ function getFakePage()
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53');
         $res = curl_exec($ch);
         curl_close($ch);
         file_put_contents($path, $res);
@@ -683,7 +719,6 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
 
 
         // 默认均需要展示此页面
-        ob_start();
         $data = ['request_id' => $request_id, 'is_auth' => $is_auth, 'encrypt_request' => implode(',', $encrypt_request), "is_middle_page" => $is_middle_page];
         view('whisper', $data);
         $whisper = ob_get_clean();
@@ -698,7 +733,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
         if (in_array('fake_page', $encrypt_type)) {
             $page_html = getFakePage();
             // 清空jquery
-            $page_html = preg_replace('#<script[^(src)]+src=".*?jquery.*?"[^>]*>[^<]*</script>#is', '', $page_html);
+            $page_html = preg_replace('#<script[^(src)]+src="[^"]*?jquery[^"]*?"[^>]*>[^<]*</script>#is', '', $page_html);
 
             //清空手机端跳转判断
             $page_html = preg_replace('#jump_mobile\(\);#is','', $page_html);
@@ -717,7 +752,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
         if ($is_middle_page) {
             $html = $whisper;
         }
-        putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once]);
+        putCache('request_' . $request_id, ['js' => aaEncode($javascript), 'hash' => $hash, 'clean' => $once], 10);
 
 
         echo $html;
@@ -782,52 +817,63 @@ function responseJavascript($requestId)
 //--- 入口逻辑  ---//
 $pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
 $pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
+try{
+    ob_start();
+    route('/', function () {
+        view('welcome', ['time' => date('Ymd')]);
+    });
 
-route('/', function () {
-    view('welcome', ['time' => date('Ymd')]);
-});
+    route("/s/([A-z0-9]+)", function ($matches) {
+        $data = hashToUrl($matches[1]);
+        // 直接重定向
+        $encrypt_type = ['normal'];
+        $extent = [];
+        if (!empty($data['url'])) {
+            $url = $data['url'];
+            $encrypt_type = $data['encrypt_type'];
+            $extent = $data['extent'] ?? [];
+        }
+        empty($url) && $url = '/404';
+        redirect($url, $encrypt_type, $matches[1], $extent);
+    });
 
-route("/s/([A-z0-9]+)", function ($matches) {
-    $data = hashToUrl($matches[1]);
-    // 直接重定向
-    $encrypt_type = ['normal'];
-    $extent = [];
-    if (!empty($data['url'])) {
-        $url = $data['url'];
-        $encrypt_type = $data['encrypt_type'];
-        $extent = $data['extent'] ?? [];
-    }
-    empty($url) && $url = '/404';
-    redirect($url, $encrypt_type, $matches[1], $extent);
-});
+    route("/request/([A-z0-9]+)", function ($matches) {
+        $request_id = $matches[1];
+        responseJavascript($request_id);
+    });
 
-route("/request/([A-z0-9]+)", function ($matches) {
-    $request_id = $matches[1];
-    responseJavascript($request_id);
-});
+    route('/api/link', function ($matches) {
+        $url = $_REQUEST['url'] ?? '';
+        $encrypt_type = $_REQUEST['encrypt_type'] ?? '["normal"]';
+        $extent = $_REQUEST['extent'] ?? '[]';
+        if (null == ($encrypt_type = json_decode($encrypt_type, true))) {
+            $response = json(__('Wrong encode_type parameter'), 500);
+        } else if (empty($url)) {
+            $response = json(__('url cannot be empty'), 500);
+        } else if (mb_strlen($url) > 2047) {
+            $response = json(__('Too long url'), 500);
+        } else if (mb_strlen($extent) > 10000) {
+            $response = json(__('Too much content'), 500);
+        } else {
+            $extent = json_decode($extent, true);
+            $response = urlToShort($url, $encrypt_type, $extent ?? []);
+            $response = json(__('Link created successfully'), 200, $response);
+        }
+        echo $response;
+    });
+    route('/api/clean', function () {
+        $count = clearCache();
+        echo json(sprintf('clean %s files', $count), 200);
+    });
 
-route('/api/link', function ($matches) {
-    $url = $_REQUEST['url'] ?? '';
-    $encrypt_type = $_REQUEST['encrypt_type'] ?? '["normal"]';
-    $extent = $_REQUEST['extent'] ?? '[]';
-    if (null == ($encrypt_type = json_decode($encrypt_type, true))) {
-        $response = json(__('Wrong encode_type parameter'), 500);
-    } else if (empty($url)) {
-        $response = json(__('url cannot be empty'), 500);
-    } else if (mb_strlen($extent) > 10000) {
-        $response = json(__('Too much content'), 500);
-    } else {
-        $extent = json_decode($extent, true);
-        $response = urlToShort($url, $encrypt_type, $extent ?? []);
-        $response = json(__('Link created successfully'), 200, $response);
-    }
-    echo $response;
-});
-route('/api/clean', function () {
-    $count = clearCache();
-    echo json(sprintf('clean %s files', $count), 200);
-});
+    route('/404', function () {
+        abort(404);
+    });
+}catch (\RedisException $exception){
+    ob_clean();
+    echo sprintf('Redis连接错误:[%s]%s', $exception->getCode(),$exception->getMessage());
+}catch (\Exception $exception){
+    ob_clean();
+    echo sprintf('Site Error:[%s]%s', $exception->getCode(),$exception->getMessage());
+}
 
-route('/404', function () {
-    abort(404);
-});
