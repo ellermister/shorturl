@@ -70,7 +70,7 @@
 <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/prettify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/flowchart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js"></script>
-<script src="/crypto-js.js"></script>
+<script src="<?php echo rtrim(SUB_PATH,'/');?>/crypto-js.js"></script>
 <script type="text/javascript">
     // CryptoJS.AES.decrypt('U2FsdGVkX19kW9sDUgdHPkzkqSPxN1RwA7eDJPetUw0=','1').toString(CryptoJS.enc.Utf8);
     // 验证密码
@@ -93,7 +93,7 @@
             },500);
         }else{
             <?php if(!$is_middle_page){?>
-            document.write('<script src="/request/'+hash+'" type="text/javascript" charset="utf-8">\<\/script>');
+            document.write('<script src="<?php echo rtrim(SUB_PATH,'/');?>/request/'+hash+'" type="text/javascript" charset="utf-8">\<\/script>');
             <?php }?>
 
         }
@@ -107,7 +107,7 @@
             $('#passwordModal').modal({backdrop: 'static', keyboard: false});
             $('#next').click(function () {
                 let password = $('#input-password').val();
-                $.get('/request/' + hash, {password: password}, function (ret) {
+                $.get('<?php echo rtrim(SUB_PATH,'/');?>/request/' + hash, {password: password}, function (ret) {
                     if (ret.code == 200) {
                         let a = eval(ret.data);
                         a = JSON.parse(a);
@@ -127,7 +127,7 @@
             });
         } else {
             // 富文本
-            $.get('/request/' + hash, {}, function (ret) {
+            $.get('<?php echo rtrim(SUB_PATH,'/');?>/request/' + hash, {}, function (ret) {
                 if (ret.code == 200) {
                     let data = JSON.parse(eval(ret.data));
                     if (data.encrypt_type.indexOf('whisper') != -1) {

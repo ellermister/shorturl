@@ -284,7 +284,7 @@
         });
         $.ajax({
             type: "post",
-            url: "/api/link",
+            url: "<?php echo rtrim(SUB_PATH,'/');?>/api/link",
             async: true,
             dataType: 'json',
             data: {url: url, encrypt_type: JSON.stringify(selected), extent: JSON.stringify(extent)},

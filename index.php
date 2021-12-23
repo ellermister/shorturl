@@ -10,6 +10,7 @@ define('CACHE_EXPIRE', 3600 * 24 * 7);// 缓存时间，单位秒
 define('IS_HTTPS', false);//是否HTTPS
 define('VIEW_PATH', 'view');//视图模板目录
 define('PASS', true);// 访问许可
+define('SUB_PATH', '/');// 子目录： `/` OR `/shorturl/` 必须以 `/` 结尾
 
 // --- 语言相关  ---//
 $lang_package = [
@@ -147,9 +148,9 @@ function getCacheType()
 function getRedisConnect()
 {
     $redis = new \Redis();
-    $redis->connect(CACHE_REDIS_HOST,CACHE_REDIS_PORT);
+    $redis->connect(CACHE_REDIS_HOST, CACHE_REDIS_PORT);
     CACHE_REDIS_KEY && $redis->auth(CACHE_REDIS_KEY);
-    if($redis->isConnected()){
+    if ($redis->isConnected()) {
         return $redis;
     }
     throw new RuntimeException("Redis 连接失败!",);
@@ -163,7 +164,7 @@ function putCache($name, $value, $timeout = null)
         file_put_contents($dir . DIRECTORY_SEPARATOR . $name . '.data', serialize($value));
     } else if ($engine == 'redis') {
         $redis = getRedisConnect();
-        $redis->set(CACHE_REDIS_PREFIX.$name, json_encode($value), $timeout);
+        $redis->set(CACHE_REDIS_PREFIX . $name, json_encode($value), $timeout);
     }
 }
 
@@ -175,7 +176,7 @@ function hasCache($name)
         return is_file($dir . DIRECTORY_SEPARATOR . $name . '.data');
     } else if ($engine == 'redis') {
         $redis = getRedisConnect();
-        return $redis->exists(CACHE_REDIS_PREFIX.$name);
+        return $redis->exists(CACHE_REDIS_PREFIX . $name);
     }
     return false;
 }
@@ -192,7 +193,7 @@ function getCache($name)
         return unserialize($raw);
     } else if ($engine == 'redis') {
         $redis = getRedisConnect();
-        return json_decode($redis->get(CACHE_REDIS_PREFIX.$name),true);
+        return json_decode($redis->get(CACHE_REDIS_PREFIX . $name), true);
     }
 }
 
@@ -224,18 +225,18 @@ function clearCache($name = null)
             @unlink($path);
         }
 
-    }else if($engine == 'redis'){
+    } else if ($engine == 'redis') {
         $redis = getRedisConnect();
-        if ($name != null){
-            $redis->del(CACHE_REDIS_PREFIX.$name);
+        if ($name != null) {
+            $redis->del(CACHE_REDIS_PREFIX . $name);
             $count++;
-        }else{
+        } else {
             $iterator = null;
-            while($list = $redis->scan($iterator, CACHE_REDIS_PREFIX.'*', 200)){
+            while ($list = $redis->scan($iterator, CACHE_REDIS_PREFIX . '*', 200)) {
                 $chunk_keys = array_chunk($list, 50);
-                foreach ($chunk_keys as $keys){
+                foreach ($chunk_keys as $keys) {
                     $redis->del(...$keys);
-                    $count+= count($keys);
+                    $count += count($keys);
                 }
             }
         }
@@ -306,7 +307,7 @@ function urlToShort($url, $encrypt_type = 'encrypt', $extent = '')
         $url = 'http://' . $url;
     }
     $id = urlToHash($url, $encrypt_type, $extent);
-    $shortUrl = sprintf('%s://%s/%s/%s', IS_HTTPS ? 'https' : 'http', $_SERVER['HTTP_HOST'], 's', $id);
+    $shortUrl = sprintf('%s://%s/%s/%s', IS_HTTPS ? 'https' : 'http', $_SERVER['HTTP_HOST'], ltrim(SUB_PATH, '/') . 's', $id);
     addUrlRecord($url);
     return ($shortUrl);
 }
@@ -553,6 +554,11 @@ function route($uri, Closure $_route)
     } else {
         $pathInfo = $_SERVER['PATH_INFO'];
     }
+
+    if (substr($pathInfo, 0, strlen(SUB_PATH)) == SUB_PATH) {
+        $pathInfo = '/' . ltrim(substr($pathInfo, strlen(SUB_PATH)), '/');
+    }
+
     $pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
     if (preg_match('#^' . $uri . '$#', $pathInfo, $matches)) {
         $_route($matches);
@@ -638,7 +644,7 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
         //判断是否需要加密
         $javascript = "";
         if (in_array('encrypt', $encrypt_type)) {
-            $script = '<script src="/request/{{request_id}}" type="text/javascript" charset="utf-8"></script>';
+            $script = '<script src="' . SUB_PATH . 'request/{{request_id}}" type="text/javascript" charset="utf-8"></script>';
             $javascript = makeRedirectJs($url);
             $script = str_replace('{{request_id}}', $request_id, $script);
         }
@@ -740,11 +746,14 @@ function redirect($url, array $encrypt_type, $hash, array $extent = [])
             $page_html = preg_replace('#<script[^(src)]+src="[^"]*?jquery[^"]*?"[^>]*>[^<]*</script>#is', '', $page_html);
 
             //清空手机端跳转判断
-            $page_html = preg_replace('#jump_mobile\(\);#is','', $page_html);
+            $page_html = preg_replace('#jump_mobile\(\);#is', '', $page_html);
 
-            $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function ($matches) use ($referer, $script, $whisper_head) {
+            // 忽略 JS 错误
+            $ignore_error = '<script type="text/javascript">window.onerror = function(){return true};</script>';
+
+            $page_html = preg_replace_callback('#<head>(.*?)<\/head>#is', function ($matches) use ($referer, $script, $whisper_head, $ignore_error) {
                 $whisper_head = preg_replace('#<title>.*?</title>#is', '', $whisper_head);// 清空title
-                return "<head>{$referer}\n{$script}\n{$whisper_head}\n{$matches[1]}</head>";
+                return "<head>{$referer}\n{$script}\n{$whisper_head}\n{$matches[1]}\n{$ignore_error}</head>";
             }, $page_html);
             $page_html = preg_replace_callback('#<body[^>]+>(.*?)<\/body>#is', function ($matches) use ($referer, $script, $whisper_body) {
                 return "<body>{$whisper_body}\n{$matches[1]}</body>";
@@ -819,7 +828,7 @@ function responseJavascript($requestId)
 
 
 //--- 入口逻辑  ---//
-try{
+try {
     ob_start();
     route('/', function () {
         view('welcome', ['time' => date('Ymd')]);
@@ -871,11 +880,11 @@ try{
     route('/404', function () {
         abort(404);
     });
-}catch (\RedisException $exception){
+} catch (\RedisException $exception) {
     ob_clean();
-    echo sprintf('Redis连接错误:[%s]%s', $exception->getCode(),$exception->getMessage());
-}catch (\Exception $exception){
+    echo sprintf('Redis连接错误:[%s]%s', $exception->getCode(), $exception->getMessage());
+} catch (\Exception $exception) {
     ob_clean();
-    echo sprintf('Site Error:[%s]%s', $exception->getCode(),$exception->getMessage());
+    echo sprintf('Site Error:[%s]%s', $exception->getCode(), $exception->getMessage());
 }
 

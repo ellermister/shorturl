@@ -39,7 +39,23 @@ php -S 127.0.0.1:12138
 
 http://127.0.0.1:12138
 
-##### 
+##### nginx 配置
+
+```nginx
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+```
+
+##### 二级目录配置
+
+比如，`/shorturl/`以 `/` 结尾，实际访问 `http://ip/shorturl/`
+
+```php
+define('SUB_PATH', '/shorturl/');
+```
+
+
 
 #### API
 

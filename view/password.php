@@ -44,7 +44,7 @@
 	$('#passwordModal').modal({backdrop: 'static', keyboard: false});
 	$('#next').click(function(){
 		let password = $('#input-password').val();
-		$.get('/request/'+hash, {password:password}, function(ret){
+		$.get('<?php echo rtrim(SUB_PATH,'/');?>/request/'+hash, {password:password}, function(ret){
 			if(ret.code == 200){
 				let a = eval(ret.data);
 				console.log(a);
