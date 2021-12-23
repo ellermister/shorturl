@@ -548,7 +548,11 @@ function abort($status = 404)
 
 function route($uri, Closure $_route)
 {
-    $pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
+    if (empty($_SERVER['PATH_INFO'])) {
+        $pathInfo = $_SERVER['REQUEST_URI'] ?? '/';
+    } else {
+        $pathInfo = $_SERVER['PATH_INFO'];
+    }
     $pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
     if (preg_match('#^' . $uri . '$#', $pathInfo, $matches)) {
         $_route($matches);
@@ -815,8 +819,6 @@ function responseJavascript($requestId)
 
 
 //--- 入口逻辑  ---//
-$pathInfo = $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '/');
-$pathInfo = preg_replace('/\?.*?$/is', '', $pathInfo);
 try{
     ob_start();
     route('/', function () {
