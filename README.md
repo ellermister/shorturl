@@ -55,7 +55,13 @@ location / {
 define('SUB_PATH', '/shorturl/');
 ```
 
+同样，这里 nginx 要做配置
 
+```nginx
+ location /shorturl {
+    try_files $uri $uri/ /shorturl/index.php?$query_string;
+ }
+```
 
 #### API
 
