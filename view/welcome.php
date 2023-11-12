@@ -56,21 +56,7 @@
                 </div>
             </div>
             <div class="mb-3" id="extent-element">
-                <div class="custom-control custom-checkbox custom-control-inline">
-                    <input type="checkbox" id="radio-normal" name="encrypt_type" class="custom-control-input"
-                           value="normal">
-                    <label class="custom-control-label" for="radio-normal"><?php echo __('normal') ?></label>
-                </div>
-                <div class="custom-control custom-checkbox custom-control-inline">
-                    <input type="checkbox" id="radio-dynamic" name="encrypt_type" class="custom-control-input"
-                           value="dynamic">
-                    <label class="custom-control-label" for="radio-dynamic"><?php echo __('no referer') ?></label>
-                </div>
-                <div class="custom-control custom-checkbox custom-control-inline">
-                    <input type="checkbox" id="radio-encrypt" name="encrypt_type" class="custom-control-input"
-                           value="encrypt" checked="">
-                    <label class="custom-control-label" for="radio-encrypt"><?php echo __('encrypt redirect') ?></label>
-                </div>
+                <h5><?php echo __('Firewall')?></h5>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-fake-page" name="encrypt_type" class="custom-control-input"
                            value="fake_page" checked="">
@@ -108,6 +94,22 @@
                            value="non_china_only">
                     <label class="custom-control-label"
                            for="radio-non-china-only"><?php echo __('Non-mainland China access only') ?></label>
+                </div>
+                <h5 class="mt-2"><?php echo __('Endpoint');?></h5>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" id="radio-normal" name="encrypt_type" class="custom-control-input"
+                           value="normal">
+                    <label class="custom-control-label" for="radio-normal"><?php echo __('normal') ?></label>
+                </div>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" id="radio-dynamic" name="encrypt_type" class="custom-control-input"
+                           value="dynamic">
+                    <label class="custom-control-label" for="radio-dynamic"><?php echo __('no referer') ?></label>
+                </div>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" id="radio-encrypt" name="encrypt_type" class="custom-control-input"
+                           value="encrypt" checked="">
+                    <label class="custom-control-label" for="radio-encrypt"><?php echo __('encrypt redirect') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline" style="display: inline-block;">
                     <input type="checkbox" id="radio-whisper" name="encrypt_type" class="custom-control-input"
@@ -178,7 +180,9 @@
 
         </div>
         <div class="card-footer text-muted">
-            <?php echo __('This site generates a total of :url_record_history links，Currently active :url_active_history', ['url_record_history' => getUrlRecordHistory(), 'url_active_history' => getUrlRecord()]) ?>
+            <?php
+            $su = new \Libs\ShortURL();
+            echo __('This site generates a total of :url_record_history links，Currently active :url_active_history', ['url_record_history' => $su->getUrlRecordHistory(), 'url_active_history' => $su->getUrlRecord()]) ?>
             。
         </div>
     </div>
@@ -218,6 +222,10 @@
 
     }
 
+    function cancelCheckedForForm(name, value){
+        $(`[name="${name}"][value="${value}"]`).prop('checked', false);
+    }
+
     $('#extent-element input[type="checkbox"]').click(function () {
         var name = $(this).attr('name');
         $('[extent]').hide();
@@ -228,29 +236,34 @@
             selected.push($(this).val());
         });
         // 原始单选 冲突
-        if ($(this).val() == 'normal') {
-            $('#extent-element input[type="checkbox"]').each(function () {
-                this.checked = false;
-            });
-            $(this).prop('checked', true);
-        } else {
-            $('[name="' + name + '"][value="normal"]').prop('checked', false);
+        let bindingEndpoint = [
+            'normal',
+            'dynamic',
+            'encrypt',
+            'whisper',
+        ]
+
+        let currentSelected = $(this).val()
+        if(bindingEndpoint.indexOf(currentSelected) > -1){
+            bindingEndpoint.filter(i => i!=currentSelected).map( i =>{
+                cancelCheckedForForm(name, i)
+            })
         }
+
         // PC、手机选择 冲突
         if (current == 'pc_only') {
-            $('[name="' + name + '"][value="mobile_only"]').prop('checked', false);
-            console.log('关闭手机选项');
+            cancelCheckedForForm(name, 'mobile_only')
         } else if (current == 'mobile_only') {
-            $('[name="' + name + '"][value="pc_only"]').prop('checked', false);
+            cancelCheckedForForm(name, 'pc_only')
         }
         // 大陆、非大陆 冲突
         if (current == 'china_only') {
-            $('[name="' + name + '"][value="non_china_only"]').prop('checked', false);
+            cancelCheckedForForm(name, 'non_china_only')
         } else if (current == 'non_china_only') {
-            $('[name="' + name + '"][value="china_only"]').prop('checked', false);
+            cancelCheckedForForm(name, 'china_only')
         }
-        let id = $(this).attr('id');
 
+        let id = $(this).attr('id');
         $('#extent-element input[type="checkbox"]').each(function () {
             if (selected.indexOf($(this).val()) != -1) {
                 $('[extent="' + $(this).attr('id') + '"]').show();
@@ -261,9 +274,13 @@
             editor = editormd("editor", {
                 // width: "630px",
                 height: 630,
-                // markdown: "xxxx",     // dynamic set Markdown text
                 path: "https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/"  // Autoload modules mode, codemirror, marked... dependents libs path
             });
+        }
+
+
+        if(current == "password"){
+            $('#input-password').focus();
         }
 
     });
@@ -284,8 +301,11 @@
             dataType: 'json',
             data: {url: url, encrypt_type: JSON.stringify(selected), extent: JSON.stringify(extent)},
             success: function (result) {
-                if (result.code == 200) {
-                    $('#copy-text input').val(result.data);
+                if (result.code === 200) {
+                    // convert to https if need
+                    let shortURL = new URL(result.data)
+                    shortURL.protocol = window.location.protocol
+                    $('#copy-text input').val(shortURL);
                     message(result.msg, 'success');
                     $('.modal').modal('show');
                 } else {

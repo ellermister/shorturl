@@ -1,0 +1,44 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+
+
+env:
+  UPLOAD_IMAGES: true
+  PUSH_IMAGES: true
+  RELEASE_IMAGE_TAG: ellermister/shourturl:latest
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+        id: compile
+        run: |
+          docker build . --file Dockerfile --tag ${{ env.RELEASE_IMAGE_TAG }}
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+          docker save ${{ env.RELEASE_IMAGE_TAG }} > docker.tar
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+      - name: Push images to regitry
+        if: steps.compile.outputs.status == 'success' && env.PUSH_IMAGES == 'true'
+        run: docker push ${{ env.RELEASE_IMAGE_TAG }}
+
+      - name: Upload images
+        uses: actions/upload-artifact@main
+        if: steps.compile.outputs.status == 'success' && env.UPLOAD_IMAGES == 'true'
+        with:
+          name: ShortURL_Images${{ env.FILE_DATE }}
+          path: docker.tar
