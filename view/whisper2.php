@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="<?php echo get_lang() ?>">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -11,18 +11,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.preview.css"/>
 
     <title>whisper text!</title>
-    <style>
-        .editormd-html-preview {
-            margin: 0 auto;
-            border: 1px solid #b6b6b6;
-            padding-bottom: 25px;
-            /* padding: 20px 16px; */
-            background-color: #fff;
-            border-radius: 8px;
-            opacity: .95;
-            margin-top: 20px;
-        }
-    </style>
 </head>
 <body>
 <div class="container-fluid" style="margin-top: 40px;">
@@ -49,8 +37,8 @@
 <script>
 
 function showMarkdown(whisper) {
-    let testEditormdView = editormd.markdownToHTML("editormd-view", {
-        markdown: whisper,//+ "\r\n" + $("#append-test").text(),
+    let editormdView = editormd.markdownToHTML("editormd-view", {
+        markdown: whisper,
         //htmlDecode      : true,       // 开启 HTML 标签解析，为了安全性，默认不开启
         htmlDecode: "style,script,iframe",  // you can filter tags decode
         //toc             : false,
@@ -64,8 +52,7 @@ function showMarkdown(whisper) {
     });
 }
 
-showMarkdown(`<?php echo $whisper; ?>`);
-
+showMarkdown(window.atob("<?php echo base64_encode($whisper); ?>"));
 
 </script>
 </body>
