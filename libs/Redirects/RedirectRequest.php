@@ -42,6 +42,7 @@ class RedirectRequest
 
         // 优先级
         $this->handlers = [
+            $this->makeHandler(BanChinaBrowser::class),
             $this->makeHandler(WhisperHandler::class),
             $this->makeHandler(EncryptHandler::class),
             $this->makeHandler(PasswordHandler::class),

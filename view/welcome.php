@@ -59,18 +59,23 @@
                 <h5><?php echo __('Firewall')?></h5>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-fake-page" name="encrypt_type" class="custom-control-input"
+                           value="ban_china_browser" checked="">
+                    <label class="custom-control-label" for="radio-fake-page"><?php echo __('Ban China Browser') ?></label>
+                </div>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" id="radio-fake-page" name="encrypt_type" class="custom-control-input"
                            value="fake_page" checked="">
                     <label class="custom-control-label" for="radio-fake-page"><?php echo __('Fake page') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-once" name="encrypt_type" class="custom-control-input"
                            value="once">
-                    <label class="custom-control-label" for="radio-once"><?php echo __('redirect once') ?></label>
+                    <label class="custom-control-label" for="radio-once"><?php echo __('Redirect once') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-password" name="encrypt_type" class="custom-control-input"
                            value="password">
-                    <label class="custom-control-label" for="radio-password"><?php echo __('password access') ?></label>
+                    <label class="custom-control-label" for="radio-password"><?php echo __('Password access') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-pc-only" name="encrypt_type" class="custom-control-input"
@@ -87,7 +92,7 @@
                     <input type="checkbox" id="radio-china-only" name="encrypt_type" class="custom-control-input"
                            value="china_only">
                     <label class="custom-control-label"
-                           for="radio-china-only"><?php echo __('mainland China access only') ?></label>
+                           for="radio-china-only"><?php echo __('Mainland China access only') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-non-china-only" name="encrypt_type" class="custom-control-input"
@@ -99,37 +104,37 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-normal" name="encrypt_type" class="custom-control-input"
                            value="normal">
-                    <label class="custom-control-label" for="radio-normal"><?php echo __('normal') ?></label>
+                    <label class="custom-control-label" for="radio-normal"><?php echo __('Normal') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-dynamic" name="encrypt_type" class="custom-control-input"
                            value="dynamic">
-                    <label class="custom-control-label" for="radio-dynamic"><?php echo __('no referer') ?></label>
+                    <label class="custom-control-label" for="radio-dynamic"><?php echo __('No referer') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-encrypt" name="encrypt_type" class="custom-control-input"
                            value="encrypt" checked="">
-                    <label class="custom-control-label" for="radio-encrypt"><?php echo __('encrypt redirect') ?></label>
+                    <label class="custom-control-label" for="radio-encrypt"><?php echo __('Encrypt redirect') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline" style="display: inline-block;">
                     <input type="checkbox" id="radio-whisper" name="encrypt_type" class="custom-control-input"
                            value="whisper">
-                    <label class="custom-control-label" for="radio-whisper"><?php echo __('whisper text') ?></label>
+                    <label class="custom-control-label" for="radio-whisper"><?php echo __('Whisper text') ?></label>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body text-left">
-                    <p><b> 🏄🏼‍♀️ <?php echo __('normal') ?>: </b><?php echo __('Jump directly to the website') ?><br>
-                        <b>🐸<?php echo __('no referer') ?>: </b><?php echo __('No Referer parameter') ?><br>
-                        <b>🕷 <?php echo __('encrypt redirect') ?>
+                    <p><b> 🏄🏼‍♀️ <?php echo __('Normal') ?>: </b><?php echo __('Jump directly to the website') ?><br>
+                        <b>🐸<?php echo __('No referer') ?>: </b><?php echo __('No Referer parameter') ?><br>
+                        <b>🕷 <?php echo __('Encrypt redirect') ?>
                             : </b><?php echo __('Encrypted access, anti-crawler') ?><br>
                         <b>👺 <?php echo __('Fake page') ?>
                             : </b><?php echo __('Use random news, forums, product website information to fool robots') ?>
                         <br>
-                        <b>🔥 <?php echo __('redirect once') ?>: </b><?php echo __('Jump only once') ?><br>
-                        <b>🔑 <?php echo __('password access') ?>: </b><?php echo __('Password required') ?><br>
-                        <b>📝 <?php echo __('whisper text') ?>: </b><?php echo __('Append rich text information') ?><br>
+                        <b>🔥 <?php echo __('Redirect once') ?>: </b><?php echo __('Jump only once') ?><br>
+                        <b>🔑 <?php echo __('Password access') ?>: </b><?php echo __('Password required') ?><br>
+                        <b>📝 <?php echo __('Whisper text') ?>: </b><?php echo __('Append rich text information') ?><br>
                         <b>💻 <?php echo __('PC access only') ?>
                             : </b><?php echo __('Only PC users can access this page') ?><br>
                         <b>📱 <?php echo __('Mobile access only') ?>

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.preview.css"/>
 
-    <title>whisper text!</title>
+    <title>Whisper text!</title>
 </head>
 <body>
 <div class="container-fluid" style="margin-top: 40px;">
