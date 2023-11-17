@@ -58,9 +58,9 @@
             <div class="mb-3" id="extent-element">
                 <h5><?php echo __('Firewall')?></h5>
                 <div class="custom-control custom-checkbox custom-control-inline">
-                    <input type="checkbox" id="radio-fake-page" name="encrypt_type" class="custom-control-input"
+                    <input type="checkbox" id="radio-ban-china_browser" name="encrypt_type" class="custom-control-input"
                            value="ban_china_browser" checked="">
-                    <label class="custom-control-label" for="radio-fake-page"><?php echo __('Ban China Browser') ?></label>
+                    <label class="custom-control-label" for="radio-ban-china_browser"><?php echo __('Ban China Browser') ?></label>
                 </div>
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" id="radio-fake-page" name="encrypt_type" class="custom-control-input"
