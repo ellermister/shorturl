@@ -39,10 +39,10 @@ WORKDIR /app
 COPY --from=build /out/shorturl /app/shorturl
 COPY server/scripts/download-ip2region.sh /app/download-ip2region.sh
 
-RUN mkdir -p /app/data \
-  && IP2REGION_OUT=/app/data/ip2region_v4.xdb \
-     bash -c 'curl -fsSL -o "$IP2REGION_OUT" \
-       https://github.com/lionsoul2014/ip2region/raw/master/data/ip2region_v4.xdb' \
+# DB under /app/data (volume); IP DB under /app/share (never bind-mounted).
+RUN mkdir -p /app/data /app/share \
+  && curl -fsSL -o /app/share/ip2region_v4.xdb \
+       https://github.com/lionsoul2014/ip2region/raw/master/data/ip2region_v4.xdb \
   && chown -R shorturl:shorturl /app \
   && chmod +x /app/shorturl /app/download-ip2region.sh
 
@@ -50,7 +50,7 @@ USER shorturl
 
 ENV ADDR=:8080 \
     DB_PATH=/app/data/shorturl.db \
-    IP2REGION_DB=/app/data/ip2region_v4.xdb \
+    IP2REGION_DB=/app/share/ip2region_v4.xdb \
     BASE_URL=http://localhost:8080 \
     CORS_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
 

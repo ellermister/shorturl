@@ -63,7 +63,7 @@ docker run -d \
 |------|------|
 | 镜像 | [`ellermister/shorturl`](https://hub.docker.com/r/ellermister/shorturl) |
 | 端口 | 容器内 `8080` |
-| 数据 | 卷挂载 `/app/data`（数据库与 IP 库等） |
+| 数据 | 卷挂载 `/app/data`（仅 SQLite）；IP 库在镜像内 `/app/share/`，勿与数据卷混放 |
 | 管理员 | `ADMIN_USER` / `ADMIN_PASS` |
 
 更多环境变量见 [`server/.env.example`](server/.env.example)。接口与开发说明见 [`server/README.md`](server/README.md)。
