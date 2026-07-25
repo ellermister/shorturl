@@ -160,7 +160,7 @@ export default {
   },
   challenge: {
     title: 'セキュリティ確認',
-    hint: '少し待ってから続行してください。DevTools のキャッシュ無効は避けてください。',
+    hint: '少し待ってから続行を押してください。',
     password: 'パスワード',
     continue: '続行',
     working: '確認中…',

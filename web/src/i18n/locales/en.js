@@ -160,7 +160,7 @@ export default {
   },
   challenge: {
     title: 'Security check',
-    hint: 'Wait a moment and click Continue. Avoid DevTools “Disable cache”.',
+    hint: 'Wait a moment, then click Continue.',
     password: 'Password',
     continue: 'Continue',
     working: 'Checking…',

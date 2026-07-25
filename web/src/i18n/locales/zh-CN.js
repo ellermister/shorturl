@@ -160,7 +160,7 @@ export default {
   },
   challenge: {
     title: '安全验证',
-    hint: '请稍作停留并点击继续；不要打开 DevTools「停用缓存」。',
+    hint: '请稍作停留，然后点击继续。',
     password: '访问密码',
     continue: '继续',
     working: '验证中…',
