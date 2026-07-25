@@ -1,2 +1,5 @@
 .idea
 .project
+.vscode
+__debug_*
+.DS_Store

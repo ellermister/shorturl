@@ -1,97 +1,83 @@
-# 🔗PHP轻量短链接
+# ShortURL
 
-PHP轻量短链接是一个简单而强大的工具，用于生成短链接，并提供多种定制化的功能，使链接管理变得更加灵活和便捷。通过使用这个工具，您可以快速生成短链接，支持API方式和在线网页方式生成。该项目提供了丰富的功能，包括密码访问、附加图文信息、仅限特定地区访问等，以满足不同需求场景的链接管理。
+短链接服务：在网页上一键生成短链，并用密码、阅后即焚、设备 / 地区限制、加密跳转、伪装页等能力，控制「谁能打开、打开多久、跳到哪里」。
 
+适合个人分享、临时交接、以及希望链接更难被简单爬取的场景。
 
-
-## 体验预览
+## 在线体验
 
 <https://x007.in/>
 
 [![preview](preview.png)](preview.png)
 
-## 支持功能
+## 能做什么
 
-- 🌵API快速生成短链接
-- 🌱在线网页生成短链接
-- 🍄支持Redis、File缓存控制
-- 🏄🏼‍♀️ 原始: 直接跳转到目标网站
-- 🐸无Referer: 无 Referer 参数，目标网站无法获取来源站地址
-- 🕷 加密跳转 : 加密跳转参数信息，反大部分爬虫抓取探测
-- 👺 伪装页面 : 使用随机信息、论坛、商品来骗过机器人爬虫
-- 🔥 阅后即焚: 一次性跳转(阅后即焚)
-- 🔑 密码访问: 将为你生成密码，访问时需要密码验证
-- 📝 附加图文: 附加富文本信息，您可以在此留言并分享给您的其他社交媒体用户
-- 💻 仅限PC访问
-- 📱 仅限手机访问
-- 🇨🇳 仅限中国大陆用户访问
-- 🗺️ 仅限非中国大陆用户访问
+### 创建与管理
 
+- 网页生成短链（中 / 英 / 日）
+- 开放注册；登录后在「我的」管理自己的短链
+- 可按套餐使用：更高创建量、自定义短码、修改目标地址、更长有效期等
+- 每条短链可查看访问明细（时间、地区、设备等）
 
+### 跳转方式
 
-## 安装
+- **普通跳转**：检查通过后尽快进入目标站
+- **加密跳转**：先挑战校验再出站，真实目标不出现在首屏
+- **无来源**：加密跳转时可选择不向目标站发送 Referer
+- **留言**：登录后可为链接附带说明，访问者校验通过后先看到再跳转
 
-采用传统 php 项目方式部署安装，以下介绍两种方式进行部署安装，线上推荐使用 Docker。
+跳转流程详见 [`加密跳转.md`](加密跳转.md)。
 
-### Docker 部署
+### 隐私与访问限制
 
-运行命令之后访问 80 端口即可, 容器内部采用 php-fpm 与 nginx 并行提供服务。
+- **阅后即焚**：成功跳转一次后失效
+- **密码访问**：自定义或自动生成
+- **伪装跳转**：爬虫 / 未授权可导向伪装站
+- **禁国产端**：可选拦截微信、QQ 等 App 内置浏览器
+- 仅限电脑 / 仅限手机
+- 仅限中国大陆 / 仅限海外
 
-```bash
-docker run -d -p 80:80 ellermister/shourturl:latest
-```
+### 站点运营（管理员）
 
+- 全站统计、短链与用户管理
+- 权益套餐与访客创建配额可在后台调整
 
+## 自己部署
 
-
-### 手动安装
-
-**下载本程序到网站根目录**
+推荐用 Docker。启动后打开映射端口即可使用（默认管理员务必改掉）。
 
 ```bash
-php -S 127.0.0.1:12138
+docker run -d \
+  --name shorturl \
+  -p 80:8080 \
+  -v shorturl-data:/app/data \
+  -e BASE_URL=https://your.domain \
+  -e JWT_SECRET=please-change-me \
+  -e ADMIN_USER=admin \
+  -e ADMIN_PASS=admin123 \
+  -e CORS_ORIGINS=https://your.domain \
+  ellermister/shorturl:latest
 ```
 
-**访问浏览**
+| 项目 | 说明 |
+|------|------|
+| 镜像 | [`ellermister/shorturl`](https://hub.docker.com/r/ellermister/shorturl) |
+| 端口 | 容器内 `8080` |
+| 数据 | 卷挂载 `/app/data`（数据库与 IP 库等） |
+| 管理员 | `ADMIN_USER` / `ADMIN_PASS` |
 
-http://127.0.0.1:12138
+更多环境变量见 [`server/.env.example`](server/.env.example)。接口与开发说明见 [`server/README.md`](server/README.md)。
 
-**nginx 配置**
+### 快速调用 API
 
-```nginx
-location / {
-    try_files $uri $uri/ /index.php?$query_string;
-}
-```
-
-**二级目录配置**
-
-比如，`/shorturl/`以 `/` 结尾，实际访问 `http://ip/shorturl/`
-
-```php
-define('SUB_PATH', '/shorturl/');
-```
-
-同样，这里 nginx 要做配置
-
-```nginx
- location /shorturl {
-    try_files $uri $uri/ /shorturl/index.php?$query_string;
- }
-```
-
-
-
-### API
-
-**生成短链接**
+未登录也可创建（受访客配额限制）：
 
 ```bash
-curl -s http://127.0.0.1:12138/api/link?url=https://map.baidu.com/poi/%E4%B9%9D%E9%BE%99%E5%85%AC%E5%9B%AD/@12713897.395906774,2531599.1717763273,15.45z
+curl -s -X POST http://127.0.0.1:8080/api/v1/links \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com","features":["encrypt","fake_page"]}'
 ```
 
-Response
+## License
 
-```json
-{"msg":"ok","code":200,"data":"http://127.0.0.1:12138/s/aFdlm"}
-```
+[MIT](LICENSE)

@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0c1b24;
+  --ink-soft: #3d5160;
+  --paper: #eef3f6;
+  --paper-2: #ffffff;
+  --line: rgba(12, 27, 36, 0.12);
+  --accent: #0f766e;
+  --accent-soft: rgba(15, 118, 110, 0.12);
+  --warn: #b45309;
+  --danger: #be123c;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* Shared surface for redirect / utility pages */
+.page-center {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background:
+    radial-gradient(900px 480px at 15% 0%, rgba(15, 118, 110, 0.14), transparent 55%),
+    radial-gradient(700px 420px at 90% 10%, rgba(12, 27, 36, 0.06), transparent 50%),
+    var(--paper);
+  color: var(--ink);
+}
+
+.page-panel {
+  width: min(420px, 100%);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  padding: 1.5rem;
+}
+
+.page-panel h1 {
+  margin: 0 0 0.75rem;
+  font-family: Syne, Manrope, sans-serif;
+  font-size: 1.35rem;
+  color: var(--ink);
+}
+
+.page-panel p {
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.page-panel a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page-panel a:hover {
+  text-decoration: underline;
+}

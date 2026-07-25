@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - postcss@8.5.20

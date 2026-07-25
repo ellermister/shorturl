@@ -1,0 +1,31 @@
+# Git / IDE
+.git
+.github
+.idea
+.vscode
+**/.DS_Store
+
+# Local env & data
+**/.env
+**/data/*.db
+**/data/*.db-*
+
+# Dependencies & build outputs (rebuilt in image)
+web/node_modules
+web/dist
+server/bin
+**/coverage
+
+# Legacy PHP tree (not part of the Go image)
+view
+libs
+helper.php
+index.php
+lang.php
+chnroutes.txt
+docker-compose*.yml
+
+# Docs / assets not needed at build
+*.md
+preview.png
+LICENSE

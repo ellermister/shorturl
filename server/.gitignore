@@ -1,0 +1,6 @@
+bin/
+data/*.db
+data/*.db-*
+.env
+internal/webui/dist/**
+!internal/webui/dist/index.html
