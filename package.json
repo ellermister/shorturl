@@ -1,0 +1,6 @@
+{
+	"devDependencies": {
+		"vite-ssg": "^28.3.0",
+		"@unhead/vue": "^3.2.3"
+	}
+}

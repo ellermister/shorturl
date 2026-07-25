@@ -1,11 +1,16 @@
 const BASE = ''
 
+function canUseStorage() {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+}
+
 function getToken() {
+  if (!canUseStorage()) return ''
   return localStorage.getItem('auth_token') || localStorage.getItem('admin_token') || ''
 }
 
 export function setAuth(data) {
-  if (!data?.token) return
+  if (!data?.token || !canUseStorage()) return
   localStorage.setItem('auth_token', data.token)
   // keep admin_token for existing admin pages during transition
   localStorage.setItem('admin_token', data.token)
@@ -14,6 +19,7 @@ export function setAuth(data) {
 }
 
 export function clearAuth() {
+  if (!canUseStorage()) return
   localStorage.removeItem('auth_token')
   localStorage.removeItem('admin_token')
   localStorage.removeItem('auth_user')
@@ -21,6 +27,7 @@ export function clearAuth() {
 }
 
 export function getStoredUser() {
+  if (!canUseStorage()) return null
   try {
     return JSON.parse(localStorage.getItem('auth_user') || 'null')
   } catch {
@@ -29,6 +36,7 @@ export function getStoredUser() {
 }
 
 export function getStoredPlan() {
+  if (!canUseStorage()) return null
   try {
     return JSON.parse(localStorage.getItem('auth_plan') || 'null')
   } catch {

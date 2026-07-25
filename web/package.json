@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite-ssg build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -14,11 +14,13 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@unhead/vue": "^3.2.3",
     "@vitejs/plugin-vue": "^6.0.7",
     "autoprefixer": "^10.5.4",
     "daisyui": "^4.12.24",
     "postcss": "^8.5.20",
     "tailwindcss": "^3.4.19",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vite-ssg": "^28.3.0"
   }
 }

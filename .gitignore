@@ -3,3 +3,5 @@
 .vscode
 __debug_*
 .DS_Store
+.pnpm-store
+node_modules

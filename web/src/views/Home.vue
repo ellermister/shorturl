@@ -1,11 +1,19 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useHead } from '@unhead/vue'
 import { useI18n } from 'vue-i18n'
 import { api, clearAuth, getStoredPlan, getStoredUser } from '../api'
 import Tip from '../components/Tip.vue'
 import LangSwitch from '../components/LangSwitch.vue'
 
 const { t } = useI18n()
+
+useHead({
+  title: () => t('home.brand'),
+  meta: [
+    { name: 'description', content: () => t('home.lead') },
+  ],
+})
 
 const url = ref('')
 const loading = ref(false)
