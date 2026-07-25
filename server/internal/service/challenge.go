@@ -55,9 +55,14 @@ type ChallengeSession struct {
 }
 
 type Ticket struct {
-	Code       string `json:"code"`
-	FPHash     string `json:"fp_hash"`
-	NoReferrer bool   `json:"no_referrer"`
+	Code         string `json:"code"`
+	FPHash       string `json:"fp_hash"`
+	NoReferrer   bool   `json:"no_referrer"`
+	Platform     string `json:"platform,omitempty"`
+	ScreenWidth  int    `json:"screen_width,omitempty"`
+	ScreenHeight int    `json:"screen_height,omitempty"`
+	MaxTouch     int    `json:"max_touch,omitempty"`
+	MobileHint   bool   `json:"mobile_hint,omitempty"`
 }
 
 type JumpClaims struct {
@@ -161,6 +166,7 @@ func (s *ChallengeService) Verify(in VerifyInput, linkPassword, whisper string) 
 		return nil, err
 	}
 	ticket := Ticket{Code: ch.Code, FPHash: fpHash, NoReferrer: ch.NoReferrer}
+	fillTicketClient(&ticket, in.Fingerprint)
 	traw, _ := json.Marshal(ticket)
 	s.kv.Set(ticketKeyPrefix+nonce, traw, ticketTTL)
 
@@ -313,4 +319,52 @@ func ScoreBehavior(fp map[string]interface{}, track []MousePoint, collectTrack b
 		score += 10
 	}
 	return score
+}
+
+func fillTicketClient(t *Ticket, fp map[string]interface{}) {
+	if t == nil || fp == nil {
+		return
+	}
+	if p, ok := fp["platform"].(string); ok {
+		t.Platform = p
+	}
+	if s, ok := fp["screen"].(map[string]interface{}); ok {
+		t.ScreenWidth = jsonInt(s["width"])
+		t.ScreenHeight = jsonInt(s["height"])
+	}
+	if m, ok := fp["max_touch_points"].(float64); ok {
+		t.MaxTouch = int(m)
+	}
+	if m, ok := fp["mobile_hint"].(bool); ok {
+		t.MobileHint = m
+	}
+}
+
+// ClientInfo rebuilds browser signals captured at challenge verify for visit logging.
+func (t *Ticket) ClientInfo(ua string) *ClientInfo {
+	if t == nil {
+		return nil
+	}
+	return &ClientInfo{
+		UserAgent:      ua,
+		Platform:       t.Platform,
+		ScreenWidth:    t.ScreenWidth,
+		ScreenHeight:   t.ScreenHeight,
+		MaxTouchPoints: t.MaxTouch,
+		MobileHint:     t.MobileHint,
+	}
+}
+
+func jsonInt(v interface{}) int {
+	switch x := v.(type) {
+	case float64:
+		return int(x)
+	case int:
+		return x
+	case json.Number:
+		n, _ := x.Int64()
+		return int(n)
+	default:
+		return 0
+	}
 }

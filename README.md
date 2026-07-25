@@ -46,11 +46,26 @@
 
 推荐用 Docker。启动后打开映射端口即可使用（默认管理员务必改掉）。
 
+### 部署前置（绑定宿主机目录时必做）
+
+镜像内进程用户为 **uid 10001**。空目录被 Docker 建成 root 属主时，不改权限会无法创建数据库。
+
+```bash
+# 数据目录（按你的实际路径改）
+sudo mkdir -p /mnt/docker/shorturl
+sudo chown -R 10001:10001 /mnt/docker/shorturl
+```
+
+Compose 示例挂载：`/mnt/docker/shorturl:/app/data`。环境变量**不要加引号**（`"xxx"` 会把引号写进值里）。  
+`ADMIN_PASS` 仅在库中尚无管理员时生效；已有管理员后改环境变量不会改密码。
+
+### 启动
+
 ```bash
 docker run -d \
   --name shorturl \
   -p 80:8080 \
-  -v shorturl-data:/app/data \
+  -v /mnt/docker/shorturl:/app/data \
   -e BASE_URL=https://your.domain \
   -e JWT_SECRET=please-change-me \
   -e ADMIN_USER=admin \
@@ -64,6 +79,7 @@ docker run -d \
 | 镜像 | [`ellermister/shorturl`](https://hub.docker.com/r/ellermister/shorturl) |
 | 端口 | 容器内 `8080` |
 | 数据 | 卷挂载 `/app/data`（仅 SQLite）；IP 库在镜像内 `/app/share/`，勿与数据卷混放 |
+| 权限 | 宿主机数据目录属主需为 `10001:10001`（见上文） |
 | 管理员 | `ADMIN_USER` / `ADMIN_PASS` |
 
 更多环境变量见 [`server/.env.example`](server/.env.example)。接口与开发说明见 [`server/README.md`](server/README.md)。

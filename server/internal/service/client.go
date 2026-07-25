@@ -178,6 +178,41 @@ func IsPCAccess(c ClientInfo) bool {
 	return false
 }
 
+// ClientInfoFromUA builds a minimal ClientInfo for logging when no fingerprint is available.
+func ClientInfoFromUA(ua string) *ClientInfo {
+	ua = strings.TrimSpace(ua)
+	if ua == "" {
+		return nil
+	}
+	return &ClientInfo{
+		UserAgent: ua,
+		Platform:  InferPlatformFromUA(ua),
+	}
+}
+
+// InferPlatformFromUA guesses an OS / device family label from User-Agent.
+func InferPlatformFromUA(ua string) string {
+	lower := strings.ToLower(ua)
+	switch {
+	case strings.Contains(lower, "iphone"):
+		return "iPhone"
+	case strings.Contains(lower, "ipad"):
+		return "iPad"
+	case strings.Contains(lower, "android"):
+		return "Android"
+	case strings.Contains(lower, "windows nt"), strings.Contains(lower, "windows phone"):
+		return "Windows"
+	case strings.Contains(lower, "mac os x"), strings.Contains(lower, "macintosh"):
+		return "macOS"
+	case strings.Contains(lower, "cros"):
+		return "Chrome OS"
+	case strings.Contains(lower, "linux"):
+		return "Linux"
+	default:
+		return ""
+	}
+}
+
 // ParseLegacyClient parses "appVersion|||appName|||platform|||outerWidth|||outerHeight".
 func ParseLegacyClient(raw string) (ClientInfo, bool) {
 	parts := strings.Split(raw, "|||")

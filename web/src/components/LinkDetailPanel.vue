@@ -67,6 +67,33 @@ async function saveTarget() {
   }
 }
 
+function screenText(v) {
+  const w = Number(v?.screen_width) || 0
+  const h = Number(v?.screen_height) || 0
+  if (!w && !h) return '-'
+  return `${w}×${h}`
+}
+
+function cellText(v) {
+  const s = String(v ?? '').trim()
+  return s || '-'
+}
+
+function regionText(v) {
+  const parts = [v?.country, v?.province, v?.city]
+    .map((s) => String(s ?? '').trim())
+    .filter(Boolean)
+  const unique = []
+  const seen = new Set()
+  for (const p of parts) {
+    const key = p.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push(p)
+  }
+  return unique.length ? unique.join(' ') : '-'
+}
+
 onMounted(load)
 </script>
 
@@ -133,10 +160,10 @@ onMounted(load)
           <tr v-for="v in visits" :key="v.id">
             <td>{{ v.created_at ? new Date(v.created_at).toLocaleString() : '-' }}</td>
             <td>{{ v.ip }}</td>
-            <td>{{ [v.country, v.province, v.city].filter(Boolean).join(' ') || '-' }}</td>
-            <td>{{ v.device_type }}</td>
-            <td>{{ v.platform }}</td>
-            <td>{{ v.screen_width }}×{{ v.screen_height }}</td>
+            <td>{{ regionText(v) }}</td>
+            <td>{{ cellText(v.device_type) }}</td>
+            <td>{{ cellText(v.platform) }}</td>
+            <td>{{ screenText(v) }}</td>
             <td>{{ v.success ? t('common.yes') : t('common.no') }}</td>
             <td>{{ v.fail_reason || '-' }}</td>
           </tr>

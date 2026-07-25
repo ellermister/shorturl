@@ -108,7 +108,8 @@ func (a *API) JumpOut(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP"))
-	a.links.RecordSuccessVisit(link, ip, r.UserAgent(), r.Referer(), nil)
+	ua := r.UserAgent()
+	a.links.RecordSuccessVisit(link, ip, ua, r.Referer(), ticket.ClientInfo(ua))
 
 	http.SetCookie(w, &http.Cookie{
 		Name: service.JumpCookieName(), Value: "", Path: "/j", MaxAge: -1,

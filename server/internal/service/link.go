@@ -432,10 +432,17 @@ func (s *LinkService) recordVisitSimple(link *model.ShortLink, ctx ResolveVisitC
 		City: truncate(region.City, 64), ISP: truncate(region.ISP, 64), RegionRaw: truncate(region.Raw, 255),
 		Success: success, FailReason: reason, CreatedAt: &now,
 	}
-	if ctx.Client != nil {
-		v.Platform = truncate(ctx.Client.Platform, 64)
-		v.DeviceType = string(DetectDeviceType(*ctx.Client))
-		w, h := pickScreen(*ctx.Client)
+	client := ctx.Client
+	if client == nil {
+		client = ClientInfoFromUA(ctx.UA)
+	}
+	if client != nil {
+		if client.Platform == "" {
+			client.Platform = InferPlatformFromUA(ctx.UA)
+		}
+		v.Platform = truncate(client.Platform, 64)
+		v.DeviceType = string(DetectDeviceType(*client))
+		w, h := pickScreen(*client)
 		v.ScreenWidth, v.ScreenHeight = w, h
 	}
 	_ = s.db.Create(&v).Error
