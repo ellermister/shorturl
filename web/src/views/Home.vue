@@ -221,20 +221,24 @@ async function copyResult() {
 
 <template>
   <div class="home">
-    <div class="home-bg" aria-hidden="true" />
-
-    <header class="top">
-      <LangSwitch />
-      <template v-if="user">
-        <RouterLink class="admin-link" :to="user.role === 'admin' ? '/admin' : '/me'">
-          {{ user.role === 'admin' ? t('common.admin') : t('common.account') }}
-        </RouterLink>
-        <button type="button" class="admin-link btn-link" @click="logout">{{ t('common.logout') }}</button>
-      </template>
-      <template v-else>
-        <RouterLink class="admin-link" to="/login">{{ t('auth.login') }}</RouterLink>
-        <RouterLink class="admin-link" to="/register">{{ t('auth.register') }}</RouterLink>
-      </template>
+    <header class="nav">
+      <RouterLink class="nav-brand" to="/">
+        <span class="nav-mark" aria-hidden="true" />
+        <span>{{ t('home.brand') }}</span>
+      </RouterLink>
+      <div class="nav-actions">
+        <LangSwitch />
+        <template v-if="user">
+          <RouterLink class="nav-text" :to="user.role === 'admin' ? '/admin' : '/me'">
+            {{ user.role === 'admin' ? t('common.admin') : t('common.account') }}
+          </RouterLink>
+          <button type="button" class="nav-text btn-link" @click="logout">{{ t('common.logout') }}</button>
+        </template>
+        <template v-else>
+          <RouterLink class="nav-text" to="/register">{{ t('auth.register') }}</RouterLink>
+          <RouterLink class="nav-cta" to="/login">{{ t('auth.login') }}</RouterLink>
+        </template>
+      </div>
     </header>
 
     <main class="main">
@@ -419,41 +423,87 @@ async function copyResult() {
 
 <style scoped>
 .home {
-  position: relative;
+  --ink: #111827;
+  --ink-soft: #6b7280;
+  --paper: #ffffff;
+  --line: #e5e7eb;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --danger: #dc2626;
+  --radius: 12px;
+  --radius-sm: 8px;
   min-height: 100vh;
   color: var(--ink);
+  background:
+    radial-gradient(900px 420px at 50% -12%, rgba(37, 99, 235, 0.08), transparent 60%),
+    var(--paper);
   overflow-x: clip;
 }
-.home-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(1000px 520px at 8% -8%, rgba(15, 118, 110, 0.16), transparent 58%),
-    radial-gradient(800px 480px at 100% 0%, rgba(12, 27, 36, 0.07), transparent 52%),
-    linear-gradient(180deg, #e8eef2 0%, var(--paper) 42%, #e7eef3 100%);
-}
-.top,
-.main {
-  position: relative;
-  z-index: 1;
-}
-.top {
+.nav {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 1.1rem 1.25rem;
 }
-.admin-link {
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: var(--accent);
+  font-family: Syne, Manrope, sans-serif;
+  font-weight: 780;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+.nav-mark {
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 35%, #fff 0 28%, transparent 29%),
+    linear-gradient(145deg, #60a5fa, var(--accent));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.nav-text {
   color: var(--ink-soft);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.92rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
 }
-.admin-link:hover {
-  color: var(--accent);
+.nav-text:hover {
+  color: var(--ink);
+}
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.nav-cta:hover {
+  background: var(--accent-hover);
 }
 .btn-link {
   border: 0;
@@ -463,49 +513,55 @@ async function copyResult() {
   padding: 0;
 }
 .tip-line {
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.85rem;
 }
+.tip-line a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
 .main {
-  width: min(680px, 100%);
+  width: min(720px, 100%);
   margin: 0 auto;
-  padding: 0.25rem 1.25rem 3.5rem;
+  padding: 1.25rem 1.25rem 4rem;
 }
 .hero {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  margin-bottom: 1.5rem;
-  animation: rise 0.55s ease both;
+  align-items: center;
+  text-align: center;
+  gap: 0.7rem;
+  margin-bottom: 1.75rem;
+  animation: rise 0.5s ease both;
 }
 .brand {
-  display: block;
   margin: 0;
-  padding: 0;
   font-family: Syne, Manrope, sans-serif;
   font-weight: 800;
-  font-size: clamp(2.6rem, 9vw, 3.75rem);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: clamp(2.4rem, 8vw, 3.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   color: var(--ink);
 }
 .lead {
-  display: block;
   margin: 0;
-  max-width: 32rem;
+  max-width: 34rem;
   color: var(--ink-soft);
   font-size: 1.05rem;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 .panel {
-  background: var(--paper-2);
+  background: #fff;
   border: 1px solid var(--line);
-  padding: 1.1rem;
-  animation: rise 0.65s ease 0.05s both;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  animation: rise 0.55s ease 0.04s both;
 }
 .url-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 .url-row input,
 .extra input,
@@ -513,16 +569,17 @@ async function copyResult() {
 .result-row input {
   width: 100%;
   border: 1px solid var(--line);
-  background: #f7fafb;
+  border-radius: var(--radius-sm);
+  background: #f9fafb;
   color: var(--ink);
-  padding: 0.75rem 0.85rem;
+  padding: 0.8rem 0.9rem;
   font: inherit;
   outline: none;
 }
 .url-row input::placeholder,
 .extra input::placeholder,
 .extra textarea::placeholder {
-  color: #7a8b97;
+  color: #9ca3af;
 }
 .url-row input:focus,
 .extra input:focus,
@@ -530,38 +587,41 @@ async function copyResult() {
 .result-row input:focus {
   border-color: var(--accent);
   background: #fff;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .url-row button,
 .result-row button {
   flex: 0 0 auto;
   border: 0;
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
-  padding: 0 1.15rem;
+  padding: 0 1.2rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
 .url-row button:hover,
 .result-row button:hover {
-  filter: brightness(1.05);
+  background: var(--accent-hover);
 }
 .url-row button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 .result-row button.ghost {
-  background: var(--ink);
+  background: #111827;
+}
+.result-row button.ghost:hover {
+  background: #000;
 }
 .group {
-  margin-top: 1.15rem;
+  margin-top: 1.2rem;
 }
 .group-title {
-  margin-bottom: 0.5rem;
-  font-size: 0.78rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--ink-soft);
 }
 .opts {
@@ -573,10 +633,11 @@ async function copyResult() {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.55rem 0.4rem 0.5rem;
+  gap: 0.35rem;
+  padding: 0.42rem 0.7rem;
   border: 1px solid var(--line);
-  background: #f7fafb;
+  border-radius: 999px;
+  background: #fff;
   color: var(--ink);
   font-size: 0.88rem;
   font-weight: 600;
@@ -586,18 +647,18 @@ async function copyResult() {
 .opt.on {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: var(--ink);
+  color: var(--accent-hover);
 }
 .opt.locked {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 .opt .badge {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  background: rgba(12, 27, 36, 0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #e5e7eb;
   color: var(--ink-soft);
 }
 .opt input {
@@ -605,7 +666,7 @@ async function copyResult() {
   accent-color: var(--accent);
 }
 .extra {
-  margin-top: 0.9rem;
+  margin-top: 0.95rem;
   display: grid;
   gap: 0.35rem;
 }
@@ -624,16 +685,15 @@ async function copyResult() {
   font-weight: 600;
 }
 .result {
-  margin-top: 1.1rem;
+  margin-top: 1.15rem;
   padding-top: 1rem;
   border-top: 1px solid var(--line);
   animation: rise 0.35s ease both;
 }
 .result-label {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--ink);
 }
 .result-row {
   display: flex;
@@ -645,28 +705,29 @@ async function copyResult() {
   font-size: 0.9rem;
 }
 .stats {
-  margin: 1.1rem 0 0;
+  margin: 1.15rem 0 0;
+  text-align: center;
   color: var(--ink-soft);
   font-size: 0.9rem;
-  animation: rise 0.7s ease 0.08s both;
 }
 .about {
-  margin-top: 2.25rem;
-  padding-top: 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
   border-top: 1px solid var(--line);
-  animation: rise 0.75s ease 0.1s both;
 }
 .about h2 {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.5rem;
+  text-align: center;
   font-family: Syne, Manrope, sans-serif;
-  font-size: 1.25rem;
-  line-height: 1.3;
+  font-size: 1.35rem;
   color: var(--ink);
 }
 .about-lead {
-  margin: 0 0 1rem;
+  margin: 0 auto 1.25rem;
+  max-width: 36rem;
+  text-align: center;
   color: var(--ink-soft);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .about ul {
   list-style: none;
@@ -677,7 +738,11 @@ async function copyResult() {
 }
 .about li {
   display: grid;
-  gap: 0.15rem;
+  gap: 0.2rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
 }
 .about strong {
   color: var(--ink);
@@ -686,12 +751,18 @@ async function copyResult() {
 .about span {
   color: var(--ink-soft);
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+.home :deep(.lang select) {
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  color: var(--ink-soft);
 }
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -699,6 +770,12 @@ async function copyResult() {
   }
 }
 @media (max-width: 640px) {
+  .nav {
+    padding-inline: 1rem;
+  }
+  .nav-text:not(.btn-link) {
+    display: none;
+  }
   .url-row,
   .result-row {
     flex-direction: column;
