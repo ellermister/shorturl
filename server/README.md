@@ -61,6 +61,23 @@ Docker 镜像：`ellermister/shorturl`（见根 README）。
 
 创建时 `features` 常见取值：`normal` / `encrypt`、`dynamic`（无来源）、`whisper`、`password`、`once`、`fake_page`、`ban_china_browser`、`pc_only` / `mobile_only`、`china_only` / `non_china_only`。留言（`whisper`）仅登录用户可用。
 
+可选 `geo_policy`（地理路由）：
+
+```json
+{
+  "require": "mainland",
+  "fallback_url": "https://example.com/denied",
+  "rules": [
+    { "province": "广东", "city": "深圳", "isp": "telecom", "url": "https://a.example" },
+    { "isp": "telecom", "url": "https://b.example" }
+  ]
+}
+```
+
+- `require`：`""` | `mainland` | `overseas`（快捷准入；也可由 `china_only` / `non_china_only` 推导）
+- `rules`：省 / 市 / 运营商可空（空=任意）；更细规则优先；未命中用创建时的默认 `url`
+- 拒绝时优先 `fallback_url`，否则伪装页 / 404
+
 ## 技术栈
 
 | 层 | 技术 |

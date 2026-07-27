@@ -42,6 +42,7 @@ type ShortLink struct {
 	Features   string     `gorm:"size:512;not null;default:'[]'" json:"features"`
 	Password   string     `gorm:"size:128;not null;default:''" json:"password,omitempty"`
 	Whisper    string     `gorm:"type:text;not null;default:''" json:"whisper,omitempty"`
+	GeoPolicy  string     `gorm:"type:text;not null;default:'{}'" json:"geo_policy,omitempty"`
 	VisitCount int64      `gorm:"not null;default:0" json:"visit_count"`
 	MaxVisits  int64      `gorm:"not null;default:0" json:"max_visits"`
 	Status     int        `gorm:"not null;default:1" json:"status"`

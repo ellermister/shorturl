@@ -5,8 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { api, clearAuth, getStoredPlan, getStoredUser } from '../api'
 import Tip from '../components/Tip.vue'
 import LangSwitch from '../components/LangSwitch.vue'
+import { CN_PROVINCES, COUNTRIES, ISP_OPTIONS, emptyGeoRule, countryLabel } from '../data/geoRegions'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 useHead({
   title: () => t('home.brand'),
@@ -44,6 +45,9 @@ const features = reactive({
 
 const password = ref('')
 const whisper = ref('')
+const geoAdvanced = ref(false)
+const geoFallback = ref('')
+const geoRules = ref([emptyGeoRule()])
 
 const featureKeys = {
   firewall: [
@@ -58,6 +62,35 @@ const featureKeys = {
   ],
   endpoint: ['normal', 'encrypt'],
   encryptExtras: ['dynamic', 'whisper'],
+}
+
+const ispOptions = computed(() =>
+  ISP_OPTIONS.map((o) => ({
+    value: o.value,
+    label: t(`home.geo.isp.${o.labelKey}`),
+  })),
+)
+
+const countryOptions = computed(() =>
+  COUNTRIES.map((c) => ({
+    code: c.code,
+    label: `${countryLabel(c, locale.value)} (${c.code})`,
+  })),
+)
+
+const showGeoExtras = computed(
+  () => geoAdvanced.value || features.china_only || features.non_china_only,
+)
+
+function usesCnProvinceSelect(rule) {
+  return !rule.country || rule.country === 'CN'
+}
+
+function onCountryChange(rule) {
+  // CN province list values are not meaningful for other countries.
+  if (rule.country && rule.country !== 'CN' && CN_PROVINCES.includes(rule.province)) {
+    rule.province = ''
+  }
 }
 
 const planFeatures = computed(() => {
@@ -132,6 +165,42 @@ watch(() => features.mobile_only, (v) => { if (v) features.pc_only = false })
 watch(() => features.china_only, (v) => { if (v) features.non_china_only = false })
 watch(() => features.non_china_only, (v) => { if (v) features.china_only = false })
 
+function addGeoRule() {
+  geoRules.value.push(emptyGeoRule())
+}
+
+function removeGeoRule(idx) {
+  if (geoRules.value.length <= 1) {
+    geoRules.value = [emptyGeoRule()]
+    return
+  }
+  geoRules.value.splice(idx, 1)
+}
+
+function buildGeoPolicy() {
+  const require = features.china_only
+    ? 'mainland'
+    : features.non_china_only
+      ? 'overseas'
+      : ''
+  const rules = geoAdvanced.value
+    ? geoRules.value
+      .filter((r) => (r.url || '').trim())
+      .map((r) => ({
+        country: (r.country || '').trim().toUpperCase(),
+        province: (r.province || '').trim(),
+        city: (r.city || '').trim(),
+        isp: r.isp || '',
+        url: (r.url || '').trim(),
+      }))
+    : []
+  const fallback_url = (geoFallback.value || '').trim()
+  if (!require && !fallback_url && rules.length === 0) {
+    return null
+  }
+  return { require, fallback_url, rules }
+}
+
 function pickEndpoint(key) {
   featureKeys.endpoint.forEach((k) => {
     features[k] = k === key
@@ -204,6 +273,8 @@ async function generate() {
   if (planFeatures.value.custom_code && customCode.value.trim()) {
     payload.custom_code = customCode.value.trim()
   }
+  const geo = buildGeoPolicy()
+  if (geo) payload.geo_policy = geo
 
   loading.value = true
   try {
@@ -285,6 +356,69 @@ async function copyResult() {
               <span>{{ f.label }}</span>
               <Tip :text="f.tip" />
             </label>
+          </div>
+          <label class="geo-toggle">
+            <input v-model="geoAdvanced" type="checkbox" />
+            <span>{{ t('home.geo.advanced') }}</span>
+            <Tip :text="t('home.geo.advancedTip')" />
+          </label>
+          <div v-if="geoAdvanced" class="geo-panel">
+            <p class="muted tip-line">{{ t('home.geo.rulesHint') }}</p>
+            <div v-for="(rule, idx) in geoRules" :key="idx" class="geo-rule">
+              <select v-model="rule.country" @change="onCountryChange(rule)">
+                <option value="">{{ t('home.geo.anyCountry') }}</option>
+                <option v-for="c in countryOptions" :key="c.code" :value="c.code">
+                  {{ c.label }}
+                </option>
+              </select>
+              <select v-if="usesCnProvinceSelect(rule)" v-model="rule.province">
+                <option value="">{{ t('home.geo.anyProvince') }}</option>
+                <option v-for="p in CN_PROVINCES" :key="p" :value="p">{{ p }}</option>
+              </select>
+              <input
+                v-else
+                v-model="rule.province"
+                type="text"
+                :placeholder="t('home.geo.provincePh')"
+                autocomplete="off"
+              />
+              <input
+                v-model="rule.city"
+                type="text"
+                :placeholder="t('home.geo.cityPh')"
+                autocomplete="off"
+              />
+              <select v-model="rule.isp">
+                <option v-for="o in ispOptions" :key="o.value || 'any'" :value="o.value">
+                  {{ o.label }}
+                </option>
+              </select>
+              <input
+                v-model="rule.url"
+                type="url"
+                :placeholder="t('home.geo.ruleUrlPh')"
+                autocomplete="off"
+              />
+              <button type="button" class="ghost geo-rm" @click="removeGeoRule(idx)">
+                {{ t('home.geo.remove') }}
+              </button>
+            </div>
+            <button type="button" class="ghost geo-add" @click="addGeoRule">
+              {{ t('home.geo.addRule') }}
+            </button>
+          </div>
+          <div v-if="showGeoExtras" class="extra geo-fallback">
+            <label for="geo-fallback">
+              {{ t('home.geo.fallback') }}
+              <span class="muted">{{ t('home.geo.fallbackHint') }}</span>
+            </label>
+            <input
+              id="geo-fallback"
+              v-model="geoFallback"
+              type="url"
+              :placeholder="t('home.geo.fallbackPh')"
+              autocomplete="off"
+            />
           </div>
         </div>
 
@@ -676,6 +810,86 @@ async function copyResult() {
 .opt input {
   margin: 0;
   accent-color: var(--accent);
+}
+.geo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  user-select: none;
+}
+.geo-toggle input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+.geo-panel {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+}
+.geo-rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.4rem;
+}
+.geo-rule select,
+.geo-rule input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #f9fafb;
+  color: var(--ink);
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  outline: none;
+}
+.geo-rule select:focus,
+.geo-rule input:focus {
+  border-color: #93c5fd;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.geo-rule input[type='url'] {
+  grid-column: 1 / -1;
+}
+.geo-rm,
+.geo-add {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+.geo-rm {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.geo-add:hover,
+.geo-rm:hover {
+  color: var(--ink);
+  border-color: #cbd5e1;
+}
+.geo-fallback {
+  margin-top: 0.75rem;
+}
+@media (min-width: 720px) {
+  .geo-rule {
+    grid-template-columns: 8.5rem 7rem 6rem 7rem minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .geo-rule input[type='url'] {
+    grid-column: auto;
+  }
+  .geo-rm {
+    grid-column: auto;
+  }
 }
 .extra {
   margin-top: 0.95rem;

@@ -36,21 +36,14 @@ func LinkUsable(link *model.ShortLink) GateResult {
 	return GateOK
 }
 
-// CheckUAIP applies ban_china_browser / china_only / non_china_only / (UA-only) device limits.
+// CheckUAIP applies ban_china_browser and device limits (UA / fingerprint).
+// Mainland / overseas / geo rules are handled by ResolveOutbound.
 // For encrypt verify, pass fingerprint-derived ClientInfo for stricter device checks.
 func CheckUAIP(link *model.ShortLink, ua, ip string, geo *GeoIP, client *ClientInfo) GateResult {
+	_ = ip
+	_ = geo
 	feats := link.Features
 	if FeaturesHas(feats, FeatBanChinaBrowser) && IsChinaBrowser(ua) {
-		return GateDenied
-	}
-	region := RegionInfo{}
-	if geo != nil {
-		region = geo.Lookup(ip)
-	}
-	if FeaturesHas(feats, FeatChinaOnly) && !region.IsChina {
-		return GateDenied
-	}
-	if FeaturesHas(feats, FeatNonChinaOnly) && region.IsChina {
 		return GateDenied
 	}
 

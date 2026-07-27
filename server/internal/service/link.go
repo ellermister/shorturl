@@ -56,6 +56,7 @@ type CreateLinkInput struct {
 	Extent     map[string]interface{} `json:"extent"`
 	CustomCode string                 `json:"custom_code"`
 	ExpireDays *int                   `json:"expire_days"` // nil=plan default; 0=never if allowed; >0=days
+	GeoPolicy  GeoPolicy              `json:"geo_policy"`
 }
 
 type CreateLinkResult struct {
@@ -215,6 +216,13 @@ func (s *LinkService) Create(in CreateLinkInput) (*CreateLinkResult, error) {
 	}
 
 	features := NormalizeFeatures(in.Features)
+	policy, err := SanitizeGeoPolicy(in.GeoPolicy)
+	if err != nil {
+		return nil, err
+	}
+	policy = GeoPolicyFromFeatures(features, policy)
+	features = NormalizeFeatures(SyncChinaFeatures(features, policy.Require))
+
 	password := ""
 	whisper := ""
 	maxVisits := int64(0)
@@ -292,6 +300,7 @@ func (s *LinkService) Create(in CreateLinkInput) (*CreateLinkResult, error) {
 		Features:   FeaturesMarshal(features),
 		Password:   password,
 		Whisper:    whisper,
+		GeoPolicy:  MarshalGeoPolicy(policy),
 		VisitCount: 0,
 		MaxVisits:  maxVisits,
 		Status:     model.LinkStatusActive,

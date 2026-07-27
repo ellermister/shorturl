@@ -88,6 +88,7 @@ type createBody struct {
 	Extent     map[string]interface{} `json:"extent"`
 	CustomCode string                 `json:"custom_code"`
 	ExpireDays *int                   `json:"expire_days"`
+	GeoPolicy  service.GeoPolicy      `json:"geo_policy"`
 }
 
 func (a *API) createLink(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +100,8 @@ func (a *API) createLink(w http.ResponseWriter, r *http.Request) {
 	in := service.CreateLinkInput{
 		URL: body.URL, Features: body.Features, Extent: body.Extent,
 		CustomCode: body.CustomCode, ExpireDays: body.ExpireDays,
-		ClientIP: service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP")),
+		GeoPolicy: body.GeoPolicy,
+		ClientIP:  service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP")),
 	}
 	if c := claimsFrom(r.Context()); c != nil {
 		in.UserID = c.UserID

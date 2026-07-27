@@ -4,6 +4,7 @@ import (
 	"html"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/chauncey/shorturl/server/internal/model"
 	"github.com/chauncey/shorturl/server/internal/service"
@@ -16,34 +17,43 @@ func (a *API) Entry(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 	link, err := a.links.GetByCode(code)
 	if err != nil {
-		a.failOutbound(w, r, false)
+		a.failOutbound(w, r, nil)
 		return
 	}
 	if service.LinkUsable(link) != service.GateOK {
-		a.failOutbound(w, r, service.FeaturesHas(link.Features, service.FeatFakePage))
+		a.failOutbound(w, r, link)
 		return
 	}
 
 	ip := service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP"))
 	ua := r.UserAgent()
-	fake := service.FeaturesHas(link.Features, service.FeatFakePage)
 
 	if !service.IsEncryptedJump(link.Features) {
 		if service.CheckUAIP(link, ua, ip, a.geo, nil) != service.GateOK {
-			a.failOutbound(w, r, fake)
+			a.failOutbound(w, r, link)
+			return
+		}
+		target, ok := a.resolveOutboundURL(link, ip)
+		if !ok {
+			a.failOutbound(w, r, link)
 			return
 		}
 		a.links.RecordSuccessVisit(link, ip, ua, r.Referer(), nil)
-		http.Redirect(w, r, link.TargetURL, http.StatusFound)
+		http.Redirect(w, r, target, http.StatusFound)
 		return
 	}
 
-	if fake && service.IsCrawler(ua) {
-		http.Redirect(w, r, service.FakeDecoyURL(), http.StatusFound)
+	if service.FeaturesHas(link.Features, service.FeatFakePage) && service.IsCrawler(ua) {
+		a.failOutbound(w, r, link)
 		return
 	}
 	if service.CheckUAIP(link, ua, ip, a.geo, nil) != service.GateOK {
-		a.failOutbound(w, r, fake)
+		a.failOutbound(w, r, link)
+		return
+	}
+	// Deny mainland/overseas early so we never start a challenge for blocked regions.
+	if _, ok := a.resolveOutboundURL(link, ip); !ok {
+		a.failOutbound(w, r, link)
 		return
 	}
 
@@ -87,28 +97,32 @@ func (a *API) JumpOut(w http.ResponseWriter, r *http.Request) {
 	nonce := r.URL.Query().Get("n")
 	cookie, err := r.Cookie(service.JumpCookieName())
 	if err != nil || sig == "" || nonce == "" {
-		a.failOutbound(w, r, false)
+		a.failOutbound(w, r, nil)
 		return
 	}
 	claims, err := a.challenge.ParseJumpJWT(cookie.Value)
 	if err != nil {
-		a.failOutbound(w, r, false)
+		a.failOutbound(w, r, nil)
 		return
 	}
 	ticket, err := a.challenge.Redeem(code, nonce, sig, claims)
 	if err != nil {
-		a.failOutbound(w, r, false)
+		a.failOutbound(w, r, nil)
 		return
 	}
 	link, err := a.links.GetByCode(code)
 	if err != nil || service.LinkUsable(link) != service.GateOK {
-		fake := err == nil && link != nil && service.FeaturesHas(link.Features, service.FeatFakePage)
-		a.failOutbound(w, r, fake)
+		a.failOutbound(w, r, link)
 		return
 	}
 
 	ip := service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP"))
 	ua := r.UserAgent()
+	target, ok := a.resolveOutboundURL(link, ip)
+	if !ok {
+		a.failOutbound(w, r, link)
+		return
+	}
 	a.links.RecordSuccessVisit(link, ip, ua, r.Referer(), ticket.ClientInfo(ua))
 
 	http.SetCookie(w, &http.Cookie{
@@ -116,10 +130,10 @@ func (a *API) JumpOut(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if ticket.NoReferrer {
-		writeNoReferrerHTML(w, link.TargetURL)
+		writeNoReferrerHTML(w, target)
 		return
 	}
-	writeReferrerHTML(w, code, link.TargetURL)
+	writeReferrerHTML(w, code, target)
 }
 
 func writeNoReferrerHTML(w http.ResponseWriter, target string) {
@@ -144,10 +158,30 @@ location.replace(` + strconv.Quote(target) + `);
 </script></body></html>`))
 }
 
-func (a *API) failOutbound(w http.ResponseWriter, r *http.Request, useFake bool) {
-	if useFake {
-		http.Redirect(w, r, service.FakeDecoyURL(), http.StatusFound)
-		return
+// resolveOutboundURL applies Require + geo rules. ok=false means visitor denied.
+func (a *API) resolveOutboundURL(link *model.ShortLink, ip string) (string, bool) {
+	region := service.RegionInfo{}
+	if a.geo != nil {
+		region = a.geo.Lookup(ip)
+	}
+	d := service.ResolveOutbound(link, region)
+	if d.Denied || strings.TrimSpace(d.URL) == "" {
+		return "", false
+	}
+	return d.URL, true
+}
+
+// failOutbound prefers GeoPolicy.fallback_url, then fake decoy, then 404.
+func (a *API) failOutbound(w http.ResponseWriter, r *http.Request, link *model.ShortLink) {
+	if link != nil {
+		if u := service.GeoFallbackURL(link); u != "" {
+			http.Redirect(w, r, u, http.StatusFound)
+			return
+		}
+		if service.FeaturesHas(link.Features, service.FeatFakePage) {
+			http.Redirect(w, r, service.FakeDecoyURL(), http.StatusFound)
+			return
+		}
 	}
 	http.NotFound(w, r)
 }
@@ -170,6 +204,10 @@ func (a *API) challengeVerify(w http.ResponseWriter, r *http.Request) {
 	ip := service.ClientIP(r.RemoteAddr, r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP"))
 	client := fingerprintToClient(body.Fingerprint, r.UserAgent())
 	if service.CheckUAIP(link, r.UserAgent(), ip, a.geo, client) != service.GateOK {
+		a.respondChallengeFail(w, link)
+		return
+	}
+	if _, ok := a.resolveOutboundURL(link, ip); !ok {
 		a.respondChallengeFail(w, link)
 		return
 	}
@@ -203,9 +241,15 @@ func (a *API) challengeVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) respondChallengeFail(w http.ResponseWriter, link *model.ShortLink) {
-	if link != nil && service.FeaturesHas(link.Features, service.FeatFakePage) {
-		util.OK(w, map[string]string{"action": "fake", "url": service.FakeDecoyURL()})
-		return
+	if link != nil {
+		if u := service.GeoFallbackURL(link); u != "" {
+			util.OK(w, map[string]string{"action": "fake", "url": u})
+			return
+		}
+		if service.FeaturesHas(link.Features, service.FeatFakePage) {
+			util.OK(w, map[string]string{"action": "fake", "url": service.FakeDecoyURL()})
+			return
+		}
 	}
 	util.Fail(w, 403, "challenge failed")
 }
