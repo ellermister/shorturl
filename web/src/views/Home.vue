@@ -108,10 +108,22 @@ const encryptExtraFeatures = computed(() =>
 )
 
 const aboutItems = computed(() =>
-  ['privacy', 'burn', 'encrypt', 'anticrawl', 'note', 'visits'].map((key) => ({
+  [
+    'diff',
+    'banChina',
+    'fake',
+    'burn',
+    'password',
+    'device',
+    'region',
+    'noReferrer',
+    'whisper',
+    'expire',
+    'jumpMode',
+  ].map((key) => ({
     key,
-    title: t(`home.about.${key}.title`),
-    text: t(`home.about.${key}.text`),
+    q: t(`home.about.${key}.q`),
+    a: t(`home.about.${key}.a`),
   })),
 )
 
@@ -412,8 +424,8 @@ async function copyResult() {
         <p class="about-lead">{{ t('home.aboutLead') }}</p>
         <ul>
           <li v-for="item in aboutItems" :key="item.key">
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.text }}</span>
+            <strong>{{ item.q }}</strong>
+            <span class="faq-a">{{ item.a }}</span>
           </li>
         </ul>
       </section>
@@ -748,10 +760,11 @@ async function copyResult() {
   color: var(--ink);
   font-size: 0.95rem;
 }
-.about span {
+.about .faq-a {
   color: var(--ink-soft);
   font-size: 0.9rem;
   line-height: 1.55;
+  white-space: pre-line;
 }
 .home :deep(.lang select) {
   border-color: var(--line);

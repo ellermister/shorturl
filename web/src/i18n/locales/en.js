@@ -113,34 +113,53 @@ export default {
     copied: 'Copied',
     passwordShow: 'Password {pwd}',
     stats: '{history} created · {active} active',
-    aboutTitle: 'Why ShortURL',
-    aboutLead:
-      'More than shortening URLs: access control and anti-scrape redirects so you decide who can open a link, for how long, and where it goes.',
-    aboutAria: 'About',
+    aboutTitle: 'FAQ',
+    aboutLead: 'A quick guide to ShortURL features so you can pick what fits your share.',
+    aboutAria: 'FAQ',
     about: {
-      privacy: {
-        title: 'Control who can open the link',
-        text: 'Password, desktop/mobile only, mainland China or overseas only, block China in-app browsers — share with the right people, not every forwarded chat.',
+      diff: {
+        q: 'How is this different from a normal short link?',
+        a: 'Typical short links mostly shorten a long URL for sharing and layout.\n\nShortURL focuses on controlled sharing: who can open it, which device or region, how many times, whether a password is required, and optional encrypted jumps so the real target is harder to scrape or bulk-probe. Best when you hand a link to specific clients or teammates—not when it will be freely forwarded everywhere.',
+      },
+      banChina: {
+        q: 'What does “No CN apps” mean?',
+        a: 'It blocks WeChat, QQ, some China browsers, and common in-app WebViews.\n\nThose environments often collect or preview visit activity. When enabled, visits from such clients are rejected (decoy page or invalid link, depending on your settings), lowering the chance the link is opened or previewed inside uncontrollable apps.',
+      },
+      fake: {
+        q: 'What is “Decoy”?',
+        a: 'With decoy on, if a visit fails your limits (device, region, browser environment, or a failed check), the visitor is sent to an unrelated decoy page instead of learning the real target.\n\nValid visits still redirect to your real URL as configured.',
       },
       burn: {
-        title: 'Burn after read & timed expiry',
-        text: 'One-time jumps expire after use; set a max lifetime when you need it. Great for temporary shares and links that should not live forever.',
+        q: 'What is “Burn after read”?',
+        a: 'The short link expires after one successful redirect; later opens cannot reach the real target.\n\nUseful for one-time handoffs, temporary credentials, or links you do not want living forever online. Failed attempts (for example a wrong password) usually do not consume that one success.',
       },
-      encrypt: {
-        title: 'Encrypted jump — target stays off the first screen',
-        text: 'A challenge page and environment checks run before outbound. The real target is not in the first response, which makes casual scraping and link previews harder.',
+      password: {
+        q: 'What is “Password” protection?',
+        a: 'Visitors must enter a password before the redirect continues. You can set a custom password or let the system generate one.',
       },
-      anticrawl: {
-        title: 'No-referrer & decoy redirects',
-        text: 'Optionally strip Referer so third parties do not see a full landing path. Crawlers or unauthorized hits can go to a decoy site instead of the real destination.',
+      device: {
+        q: 'What do “Desktop only / Mobile only” mean?',
+        a: 'Only desktop or only mobile clients can complete the jump; the other type is rejected.\n\nUseful when the destination only fits one form factor, or you want recipients to open it on a specific kind of device.',
       },
-      note: {
-        title: 'A note before redirect',
-        text: 'Signed-in users can attach a short message. After the check, visitors see it first, then continue — handy for handoff notes or temporary tips.',
+      region: {
+        q: 'What do “CN only / Overseas only” mean?',
+        a: 'Access is limited by IP region: CN only mainly allows mainland China IPs; Overseas only mainly allows non–mainland China IPs.\n\nVisits outside the allowed region are rejected. Useful for regional campaigns or geo-targeted resources.',
       },
-      visits: {
-        title: 'Visit details for your links',
-        text: 'After signing in, manage your links and check each visit log — time, region, device — to see whether it was opened and from where.',
+      noReferrer: {
+        q: 'What is “No referrer”?',
+        a: 'This is mainly for when you place the short link on your own website.\n\nExample: you put a short link on site A; visitors eventually land on site C. Normally, site C may learn via the browser Referer that traffic came from site A.\n\nWith “No referrer” enabled, outbound jumps try not to send that source info to C, so C is less likely to discover that traffic originated from your site A. This option is for encrypted jumps.',
+      },
+      whisper: {
+        q: 'What is a “Note”?',
+        a: 'When you share a link with a client, you often also need to tell them something—precautions, instructions, a password, and so on. Use a note for that.\n\nAfter the visitor opens the short link and passes verification, they see the note first, then continue to the destination URL.',
+      },
+      expire: {
+        q: 'What is “Expiry”?',
+        a: 'You can set an expiration time; after that the link stops working and cannot reach the real target.\n\nGood for time-limited shares and campaigns, or when you want links to die without manual deletion. Can be combined with burn-after-read and other options.',
+      },
+      jumpMode: {
+        q: 'Direct jump vs encrypted jump?',
+        a: 'Direct jump: after environment checks pass, redirect to the target quickly with a shorter path.\n\nEncrypted jump: visitors go through a verification page first, then outbound; the real target is not on the first screen, and you can combine password, note, and no-referrer to make casual scraping or previews harder.\n\nPrefer speed? Choose direct. Prefer keeping the target less exposed? Choose encrypted.',
       },
     },
     features: {
