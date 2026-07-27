@@ -54,7 +54,7 @@ Docker 镜像：`ellermister/shorturl`（见根 README）。
 | GET | `/api/v1/me/links/{id}/visits` | 访问明细 |
 | POST | `/api/v1/admin/login` | 管理员登录 |
 | GET | `/api/v1/admin/stats` | 全站统计 |
-| GET/DELETE | `/api/v1/admin/links`… | 短链管理 |
+| GET/PUT/DELETE | `/api/v1/admin/links`… | 短链管理（可改目标 URL、geo_policy） |
 | GET/PUT | `/api/v1/admin/users`… | 用户列表、详情、套餐与启停 |
 | GET/PUT | `/api/v1/admin/plans` | 权益套餐 JSON |
 | GET/PUT | `/api/v1/admin/guest-limits` | 匿名创建配额（单 IP 24h / 有效数） |
@@ -76,7 +76,7 @@ Docker 镜像：`ellermister/shorturl`（见根 README）。
 
 - `require`：`""` | `mainland` | `overseas`（快捷准入；也可由 `china_only` / `non_china_only` 推导）
 - `rules`：省 / 市 / 运营商可空（空=任意）；更细规则优先；未命中用创建时的默认 `url`
-- 拒绝时优先 `fallback_url`，否则伪装页 / 404
+编辑时还可传 `features`、`extent`（password / whisper）、`expire_days`（`null` 不变，`0` 永不过期，`>0` 从现在起算天数）。
 
 ## 技术栈
 

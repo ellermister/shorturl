@@ -79,6 +79,12 @@ export default {
     reason: 'Reason',
     save: 'Save',
     saved: 'Saved',
+    geoPolicy: 'Geo routing',
+    editDenied: 'Your plan does not allow editing this link.',
+    passwordKeepHint: 'Leave empty to keep the current password; auto-generate if none',
+    keepExpire: 'Keep current expiry',
+    currentExpire: 'Current expiry',
+    expireFromNow: 'Expiry will be recalculated from save time',
   },
   home: {
     brand: 'ShortURL',

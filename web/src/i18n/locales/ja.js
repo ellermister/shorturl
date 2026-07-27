@@ -79,6 +79,12 @@ export default {
     reason: '理由',
     save: '保存',
     saved: '保存しました',
+    geoPolicy: '地域ルーティング',
+    editDenied: '現在のプランではこのリンクを編集できません。',
+    passwordKeepHint: '空欄なら既存パスワードを維持。なければ自動生成',
+    keepExpire: '現在の期限を維持',
+    currentExpire: '現在の期限',
+    expireFromNow: '保存時点から有効期限を再計算します',
   },
   home: {
     brand: 'ShortURL',

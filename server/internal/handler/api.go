@@ -68,6 +68,7 @@ func (a *API) Routes(r chi.Router) {
 			r.Get("/admin/stats", a.adminStats)
 			r.Get("/admin/links", a.adminListLinks)
 			r.Get("/admin/links/{id}", a.adminGetLink)
+			r.Put("/admin/links/{id}", a.adminUpdateLink)
 			r.Delete("/admin/links/{id}", a.adminDeleteLink)
 			r.Get("/admin/links/{id}/visits", a.adminLinkVisits)
 			r.Get("/admin/users", a.adminListUsers)

@@ -1,8 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { api, getStoredPlan } from '../api'
+import Tip from './Tip.vue'
+import GeoPolicyEditor from './GeoPolicyEditor.vue'
 
 const props = defineProps({
   mode: { type: String, default: 'admin' },
@@ -16,19 +18,185 @@ const visits = ref([])
 const visitTotal = ref(0)
 const error = ref('')
 const editURL = ref('')
+const geoPolicy = ref({ require: '', fallback_url: '', rules: [] })
+const password = ref('')
+const whisper = ref('')
+const expireMode = ref('keep') // keep | never | days
+const expireDays = ref(7)
 const saving = ref(false)
 const msg = ref('')
 
+const features = reactive({
+  ban_china_browser: false,
+  fake_page: false,
+  once: false,
+  password: false,
+  pc_only: false,
+  mobile_only: false,
+  normal: false,
+  encrypt: true,
+  dynamic: false,
+  whisper: false,
+})
+
+const featureKeys = {
+  firewall: ['ban_china_browser', 'fake_page', 'once', 'password', 'pc_only', 'mobile_only'],
+  endpoint: ['normal', 'encrypt'],
+  encryptExtras: ['dynamic', 'whisper'],
+}
+
 const listPath = computed(() => (props.mode === 'me' ? '/me/links' : '/admin/links'))
 const canEdit = computed(() => {
-  if (props.mode !== 'me') return false
+  if (props.mode === 'admin') return true
   const plan = getStoredPlan()
   return !!plan?.features?.edit_target
 })
 
+const planFeatures = computed(() => {
+  if (props.mode === 'admin') {
+    return { max_expire_days: 3650, allow_never_expire: true }
+  }
+  return getStoredPlan()?.features || { max_expire_days: 7, allow_never_expire: false }
+})
+
+const expireDayOptions = computed(() => {
+  const max = planFeatures.value.max_expire_days || 7
+  const opts = []
+  for (const d of [1, 3, 7, 30, 90, 365, 3650]) {
+    if (d <= max) opts.push(d)
+  }
+  if (!opts.includes(max) && max > 0) opts.push(max)
+  return opts.sort((a, b) => a - b)
+})
+
+const firewallFeatures = computed(() =>
+  featureKeys.firewall.map((key) => ({
+    key,
+    label: t(`home.features.${key}.label`),
+    tip: t(`home.features.${key}.tip`),
+  })),
+)
+
+const endpointFeatures = computed(() =>
+  featureKeys.endpoint.map((key) => ({
+    key,
+    label: t(`home.features.${key}.label`),
+    tip: t(`home.features.${key}.tip`),
+  })),
+)
+
+const encryptExtraFeatures = computed(() =>
+  featureKeys.encryptExtras.map((key) => ({
+    key,
+    label: t(`home.features.${key}.label`),
+    tip: t(`home.features.${key}.tip`),
+  })),
+)
+
+watch(() => features.pc_only, (v) => { if (v) features.mobile_only = false })
+watch(() => features.mobile_only, (v) => { if (v) features.pc_only = false })
+
+function pickEndpoint(key) {
+  featureKeys.endpoint.forEach((k) => {
+    features[k] = k === key
+  })
+  if (key === 'normal') {
+    features.dynamic = false
+    features.whisper = false
+    features.password = false
+  }
+}
+
+function parseFeatures(raw) {
+  try {
+    const v = JSON.parse(raw || '[]')
+    return Array.isArray(v) ? v : []
+  } catch {
+    return []
+  }
+}
+
+function parseGeoPolicy(raw, featuresRaw) {
+  let p = { require: '', fallback_url: '', rules: [] }
+  try {
+    if (raw && String(raw).trim() && String(raw).trim() !== '{}') {
+      const parsed = JSON.parse(raw)
+      p = {
+        require: parsed.require || '',
+        fallback_url: parsed.fallback_url || '',
+        rules: Array.isArray(parsed.rules) ? parsed.rules : [],
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  if (!p.require) {
+    const feats = parseFeatures(featuresRaw)
+    if (feats.includes('china_only')) p.require = 'mainland'
+    else if (feats.includes('non_china_only')) p.require = 'overseas'
+  }
+  p.rules = (p.rules || []).map((r) => ({
+    country: r.country || '',
+    province: r.province || '',
+    city: r.city || '',
+    isp: r.isp || '',
+    url: r.url || '',
+  }))
+  return p
+}
+
+function buildGeoPayload(p) {
+  return {
+    require: p.require || '',
+    fallback_url: (p.fallback_url || '').trim(),
+    rules: (p.rules || [])
+      .filter((r) => (r.url || '').trim())
+      .map((r) => ({
+        country: (r.country || '').trim().toUpperCase(),
+        province: (r.province || '').trim(),
+        city: (r.city || '').trim(),
+        isp: r.isp || '',
+        url: (r.url || '').trim(),
+      })),
+  }
+}
+
+function selectedFeatures() {
+  return Object.keys(features).filter((k) => features[k])
+}
+
+function hydrateEditor(row) {
+  editURL.value = row?.target_url || ''
+  password.value = row?.password || ''
+  whisper.value = row?.whisper || ''
+  expireMode.value = 'keep'
+  expireDays.value = expireDayOptions.value[0] || 7
+
+  const keys = Object.keys(features)
+  keys.forEach((k) => { features[k] = false })
+  const list = parseFeatures(row?.features)
+  list.forEach((k) => {
+    if (k in features) features[k] = true
+  })
+  if (!features.normal && !features.encrypt) features.encrypt = true
+  if (features.normal) {
+    features.dynamic = false
+    features.whisper = false
+    features.password = false
+  }
+
+  const p = parseGeoPolicy(row?.geo_policy, row?.features)
+  geoPolicy.value = {
+    require: p.require,
+    fallback_url: p.fallback_url,
+    rules: p.rules.length ? p.rules : [],
+  }
+}
+
 async function load() {
   try {
     error.value = ''
+    msg.value = ''
     if (props.mode === 'me') {
       link.value = await api.meLink(route.params.id)
       const v = await api.meVisits(route.params.id, 1, 50)
@@ -40,7 +208,7 @@ async function load() {
       visits.value = v.items || []
       visitTotal.value = v.total || 0
     }
-    editURL.value = link.value?.target_url || ''
+    hydrateEditor(link.value)
   } catch (e) {
     error.value = e.message
   }
@@ -53,12 +221,35 @@ async function remove() {
   router.push(listPath.value)
 }
 
-async function saveTarget() {
+async function save() {
   if (!canEdit.value) return
   saving.value = true
+  error.value = ''
   msg.value = ''
+
+  const extent = {}
+  if (features.password) extent.password = password.value
+  if (features.whisper) extent.whisper = whisper.value
+
+  const payload = {
+    target_url: editURL.value,
+    features: selectedFeatures(),
+    geo_policy: buildGeoPayload(geoPolicy.value),
+    extent,
+  }
+  if (expireMode.value === 'never') {
+    payload.expire_days = 0
+  } else if (expireMode.value === 'days') {
+    payload.expire_days = expireDays.value
+  }
+
   try {
-    link.value = await api.meUpdateLink(route.params.id, { target_url: editURL.value })
+    if (props.mode === 'me') {
+      link.value = await api.meUpdateLink(route.params.id, payload)
+    } else {
+      link.value = await api.adminUpdateLink(route.params.id, payload)
+    }
+    hydrateEditor(link.value)
     msg.value = t('links.saved')
   } catch (e) {
     error.value = e.message
@@ -111,7 +302,10 @@ onMounted(load)
 
     <div v-if="link" class="meta">
       <p><b>Code</b> {{ link.code }}</p>
-      <p><b>{{ t('links.short') }}</b> <a :href="`/s/${link.code}`" target="_blank">/s/{{ link.code }}</a></p>
+      <p>
+        <b>{{ t('links.short') }}</b>
+        <a :href="`/s/${link.code}`" target="_blank">/s/{{ link.code }}</a>
+      </p>
       <p v-if="mode === 'admin'">
         <b>{{ t('links.owner') }}</b>
         <RouterLink v-if="link.user_id" :to="`/admin/users/${link.user_id}`">
@@ -122,16 +316,123 @@ onMounted(load)
           · <b>IP</b> {{ link.creator_ip }}
         </template>
       </p>
+
       <template v-if="canEdit">
         <label class="edit">
           <b>{{ t('links.target') }}</b>
           <input v-model="editURL" type="url" />
-          <button type="button" :disabled="saving" @click="saveTarget">
-            {{ saving ? t('common.loading') : t('links.save') }}
-          </button>
         </label>
+
+        <div class="edit">
+          <b>{{ t('home.groupLimit') }}</b>
+          <div class="opts">
+            <label
+              v-for="f in firewallFeatures"
+              :key="f.key"
+              class="opt"
+              :class="{ on: features[f.key] }"
+            >
+              <input v-model="features[f.key]" type="checkbox" />
+              <span>{{ f.label }}</span>
+              <Tip :text="f.tip" />
+            </label>
+          </div>
+        </div>
+
+        <div class="edit">
+          <b>{{ t('home.groupJump') }}</b>
+          <div class="opts">
+            <label
+              v-for="f in endpointFeatures"
+              :key="f.key"
+              class="opt"
+              :class="{ on: features[f.key] }"
+              @click.prevent="pickEndpoint(f.key)"
+            >
+              <input :checked="features[f.key]" type="radio" name="endpoint" readonly />
+              <span>{{ f.label }}</span>
+              <Tip :text="f.tip" />
+            </label>
+          </div>
+        </div>
+
+        <div v-if="features.encrypt" class="edit">
+          <b>{{ t('home.groupEncryptExtra') }}</b>
+          <div class="opts">
+            <label
+              v-for="f in encryptExtraFeatures"
+              :key="f.key"
+              class="opt"
+              :class="{ on: features[f.key] }"
+            >
+              <input v-model="features[f.key]" type="checkbox" />
+              <span>{{ f.label }}</span>
+              <Tip :text="f.tip" />
+            </label>
+          </div>
+        </div>
+
+        <div v-if="features.password" class="edit">
+          <label>
+            <b>{{ t('home.password') }}</b>
+            <span class="muted"> {{ t('links.passwordKeepHint') }}</span>
+          </label>
+          <input v-model="password" type="text" autocomplete="off" :placeholder="t('home.passwordPlaceholder')" />
+        </div>
+
+        <div v-if="features.whisper" class="edit">
+          <b>{{ t('home.whisper') }}</b>
+          <textarea v-model="whisper" rows="3" :placeholder="t('home.whisperPlaceholder')" />
+        </div>
+
+        <div class="edit">
+          <b>{{ t('home.groupExpire') }}</b>
+          <p class="muted tip">
+            {{ t('links.currentExpire') }}：
+            {{ link.expires_at ? new Date(link.expires_at).toLocaleString() : t('links.never') }}
+          </p>
+          <div class="opts">
+            <label class="opt" :class="{ on: expireMode === 'keep' }" @click.prevent="expireMode = 'keep'">
+              <input :checked="expireMode === 'keep'" type="radio" name="expire" readonly />
+              <span>{{ t('links.keepExpire') }}</span>
+            </label>
+            <label
+              v-for="d in expireDayOptions"
+              :key="d"
+              class="opt"
+              :class="{ on: expireMode === 'days' && expireDays === d }"
+              @click.prevent="expireMode = 'days'; expireDays = d"
+            >
+              <input :checked="expireMode === 'days' && expireDays === d" type="radio" name="expire" readonly />
+              <span>{{ t('home.expireDays', { n: d }) }}</span>
+            </label>
+            <label
+              v-if="planFeatures.allow_never_expire"
+              class="opt"
+              :class="{ on: expireMode === 'never' }"
+              @click.prevent="expireMode = 'never'"
+            >
+              <input :checked="expireMode === 'never'" type="radio" name="expire" readonly />
+              <span>{{ t('home.expireNever') }}</span>
+            </label>
+          </div>
+          <p v-if="expireMode === 'days'" class="muted tip">{{ t('links.expireFromNow') }}</p>
+        </div>
+
+        <div class="edit">
+          <b>{{ t('links.geoPolicy') }}</b>
+          <GeoPolicyEditor v-model="geoPolicy" />
+        </div>
+
+        <button type="button" class="save" :disabled="saving" @click="save">
+          {{ saving ? t('common.loading') : t('links.save') }}
+        </button>
       </template>
-      <p v-else class="break"><b>{{ t('links.target') }}</b> {{ link.target_url }}</p>
+      <template v-else>
+        <p class="break"><b>{{ t('links.target') }}</b> {{ link.target_url }}</p>
+        <p class="muted">{{ t('links.editDenied') }}</p>
+      </template>
+
       <p><b>{{ t('links.features') }}</b> {{ link.features }}</p>
       <p>
         <b>{{ t('links.visits') }}</b> {{ link.visit_count }} ·
@@ -200,7 +501,7 @@ onMounted(load)
 }
 .meta {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.85rem;
   padding: 1rem;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -208,23 +509,72 @@ onMounted(load)
   margin-bottom: 1.25rem;
 }
 .break { word-break: break-all; }
+.muted {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+.tip {
+  margin: 0;
+}
 .edit {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
-.edit input {
+.edit > b {
+  font-size: 0.92rem;
+}
+.edit input[type='url'],
+.edit input[type='text'],
+.edit textarea {
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--line);
   border-radius: 8px;
+  font: inherit;
+  width: 100%;
+  background: #f9fafb;
 }
-.edit button {
+.opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.opt.on {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.opt input {
+  margin: 0;
+  accent-color: #2563eb;
+}
+.save {
   width: fit-content;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: #0f766e;
   color: #fff;
   cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+}
+.save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .table-wrap {
   overflow-x: auto;

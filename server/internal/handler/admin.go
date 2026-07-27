@@ -82,6 +82,21 @@ func (a *API) adminGetLink(w http.ResponseWriter, r *http.Request) {
 	util.OK(w, link)
 }
 
+func (a *API) adminUpdateLink(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+	var body service.UpdateLinkInput
+	if err := util.DecodeJSON(r, &body); err != nil {
+		util.Fail(w, 400, "invalid json")
+		return
+	}
+	link, err := a.links.UpdateAdmin(id, body)
+	if err != nil {
+		a.mapLinkErr(w, err)
+		return
+	}
+	util.OK(w, link)
+}
+
 func (a *API) adminDeleteLink(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err := a.links.SoftDelete(id); err != nil {

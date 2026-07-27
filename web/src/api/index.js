@@ -135,6 +135,9 @@ export const api = {
   adminLink(id) {
     return request(`/api/v1/admin/links/${id}`)
   },
+  adminUpdateLink(id, payload) {
+    return request(`/api/v1/admin/links/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  },
   adminDeleteLink(id) {
     return request(`/api/v1/admin/links/${id}`, { method: 'DELETE' })
   },

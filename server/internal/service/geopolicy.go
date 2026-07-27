@@ -271,7 +271,7 @@ func GeoFallbackURL(link *model.ShortLink) string {
 func NormalizeHTTPURL(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return "", fmt.Errorf("empty url")
+		return "", ErrEmptyURL
 	}
 	if utf8.RuneCountInString(raw) > 2047 {
 		return "", ErrURLTooLong

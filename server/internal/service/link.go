@@ -323,7 +323,11 @@ func (s *LinkService) Create(in CreateLinkInput) (*CreateLinkResult, error) {
 }
 
 type UpdateLinkInput struct {
-	TargetURL *string `json:"target_url"`
+	TargetURL  *string                `json:"target_url"`
+	GeoPolicy  *GeoPolicy             `json:"geo_policy"`
+	Features   *[]string              `json:"features"`
+	Extent     map[string]interface{} `json:"extent"`
+	ExpireDays *int                   `json:"expire_days"` // nil=unchanged; 0=never; >0=days from now
 }
 
 func (s *LinkService) UpdateOwned(id, userID uint64, planID string, in UpdateLinkInput) (*model.ShortLink, error) {
@@ -335,33 +339,136 @@ func (s *LinkService) UpdateOwned(id, userID uint64, planID string, in UpdateLin
 		return nil, ErrForbidden
 	}
 	feat := s.planFeatures(userID, planID)
+	if !feat.EditTarget {
+		return nil, ErrEditTargetDeny
+	}
+	return s.applyLinkUpdate(link, in, feat)
+}
+
+// UpdateAdmin updates any link without plan gates (expiry still validated against a generous admin profile).
+func (s *LinkService) UpdateAdmin(id uint64, in UpdateLinkInput) (*model.ShortLink, error) {
+	link, err := s.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return s.applyLinkUpdate(link, in, AdminEditFeatures())
+}
+
+// AdminEditFeatures is used when admins edit links (no sellable-plan limits).
+func AdminEditFeatures() PlanFeatures {
+	return PlanFeatures{
+		CustomCode:       true,
+		EditTarget:       true,
+		MaxLinks:         -1,
+		MaxExpireDays:    3650,
+		AllowNeverExpire: true,
+	}
+}
+
+func (s *LinkService) applyLinkUpdate(link *model.ShortLink, in UpdateLinkInput, planFeat PlanFeatures) (*model.ShortLink, error) {
+	if in.TargetURL == nil && in.GeoPolicy == nil && in.Features == nil && in.ExpireDays == nil {
+		return link, nil
+	}
+
+	updates := map[string]interface{}{}
+	now := time.Now()
+	updates["updated_at"] = &now
+
 	if in.TargetURL != nil {
-		if !feat.EditTarget {
-			return nil, ErrEditTargetDeny
-		}
-		raw := strings.TrimSpace(*in.TargetURL)
-		if raw == "" {
-			return nil, ErrEmptyURL
-		}
-		if utf8.RuneCountInString(raw) > 2047 {
-			return nil, ErrURLTooLong
-		}
-		if !strings.Contains(raw, "://") {
-			raw = "http://" + raw
-		}
-		u, err := url.ParseRequestURI(raw)
-		if err != nil || u.Host == "" {
-			return nil, fmt.Errorf("invalid url")
-		}
-		now := time.Now()
-		if err := s.db.Model(&model.ShortLink{}).Where("id = ?", id).Updates(map[string]interface{}{
-			"target_url": raw, "updated_at": &now,
-		}).Error; err != nil {
+		raw, err := NormalizeHTTPURL(*in.TargetURL)
+		if err != nil {
 			return nil, err
 		}
+		updates["target_url"] = raw
 		link.TargetURL = raw
-		link.UpdatedAt = &now
 	}
+
+	features := FeaturesUnmarshal(link.Features)
+	policy := ParseGeoPolicy(link.GeoPolicy)
+	touchPolicy := false
+
+	if in.Features != nil {
+		features = NormalizeFeatures(*in.Features)
+		touchPolicy = true
+	}
+	if in.GeoPolicy != nil {
+		sanitized, err := SanitizeGeoPolicy(*in.GeoPolicy)
+		if err != nil {
+			return nil, err
+		}
+		policy = sanitized
+		touchPolicy = true
+	}
+
+	if touchPolicy {
+		policy = GeoPolicyFromFeatures(features, policy)
+		features = NormalizeFeatures(SyncChinaFeatures(features, policy.Require))
+		featJSON := FeaturesMarshal(features)
+		geoJSON := MarshalGeoPolicy(policy)
+		updates["features"] = featJSON
+		updates["geo_policy"] = geoJSON
+		link.Features = featJSON
+		link.GeoPolicy = geoJSON
+
+		if FeaturesHas(featJSON, FeatPassword) {
+			pwd := link.Password
+			if in.Extent != nil {
+				if p, ok := in.Extent["password"].(string); ok {
+					p = strings.TrimSpace(p)
+					if p != "" {
+						pwd = p
+					}
+				}
+			}
+			if pwd == "" {
+				pwd, _ = util.RandomString(8)
+			}
+			updates["password"] = pwd
+			link.Password = pwd
+		} else {
+			updates["password"] = ""
+			link.Password = ""
+		}
+
+		if FeaturesHas(featJSON, FeatWhisper) {
+			w := link.Whisper
+			if in.Extent != nil {
+				if ww, ok := in.Extent["whisper"].(string); ok {
+					w = ww
+				}
+			}
+			if utf8.RuneCountInString(w) > 10000 {
+				return nil, fmt.Errorf("whisper too long")
+			}
+			updates["whisper"] = w
+			link.Whisper = w
+		} else {
+			updates["whisper"] = ""
+			link.Whisper = ""
+		}
+
+		if FeaturesHas(featJSON, FeatOnce) {
+			updates["max_visits"] = int64(1)
+			link.MaxVisits = 1
+		} else {
+			updates["max_visits"] = int64(0)
+			link.MaxVisits = 0
+		}
+	}
+
+	if in.ExpireDays != nil {
+		expiresAt, err := s.resolveExpiresAt(planFeat, in.ExpireDays)
+		if err != nil {
+			return nil, err
+		}
+		updates["expires_at"] = expiresAt
+		link.ExpiresAt = expiresAt
+	}
+
+	if err := s.db.Model(&model.ShortLink{}).Where("id = ?", link.ID).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	link.UpdatedAt = &now
 	return link, nil
 }
 

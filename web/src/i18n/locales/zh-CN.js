@@ -79,6 +79,12 @@ export default {
     reason: '原因',
     save: '保存',
     saved: '已保存',
+    geoPolicy: '地理路由',
+    editDenied: '当前套餐不支持编辑此短链。',
+    passwordKeepHint: '留空则保留原密码；若无密码则自动生成',
+    keepExpire: '保持当前过期时间',
+    currentExpire: '当前过期',
+    expireFromNow: '将从保存时刻起重新计算有效期',
   },
   home: {
     brand: 'ShortURL',
