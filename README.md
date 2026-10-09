@@ -6,9 +6,9 @@
 
 ## 在线体验
 
-<https://x007.in/>
+[https://x007.in/](https://x007.in/)
 
-[![preview](preview.png)](preview.png)
+![preview](preview.png)
 
 ## 能做什么
 
@@ -26,7 +26,7 @@
 - **无来源**：加密跳转时可选择不向目标站发送 Referer
 - **留言**：登录后可为链接附带说明，访问者校验通过后先看到再跳转
 
-跳转流程详见 [`加密跳转.md`](加密跳转.md)。
+跳转流程详见 `[加密跳转.md](加密跳转.md)`。
 
 ### 隐私与访问限制
 
@@ -37,10 +37,14 @@
 - 仅限电脑 / 仅限手机
 - 仅限中国大陆 / 仅限海外
 
+
+
 ### 站点运营（管理员）
 
 - 全站统计、短链与用户管理
 - 权益套餐与访客创建配额可在后台调整
+
+
 
 ## 自己部署
 
@@ -74,15 +78,17 @@ docker run -d \
   ellermister/shorturl:latest
 ```
 
-| 项目 | 说明 |
-|------|------|
-| 镜像 | [`ellermister/shorturl`](https://hub.docker.com/r/ellermister/shorturl) |
-| 端口 | 容器内 `8080` |
-| 数据 | 卷挂载 `/app/data`（仅 SQLite）；IP 库在镜像内 `/app/share/`，勿与数据卷混放 |
-| 权限 | 宿主机数据目录属主需为 `10001:10001`（见上文） |
-| 管理员 | `ADMIN_USER` / `ADMIN_PASS` |
 
-更多环境变量见 [`server/.env.example`](server/.env.example)。接口与开发说明见 [`server/README.md`](server/README.md)。
+| 项目  | 说明                                                                      |
+| --- | ----------------------------------------------------------------------- |
+| 镜像  | `[ellermister/shorturl](https://hub.docker.com/r/ellermister/shorturl)` |
+| 端口  | 容器内 `8080`                                                              |
+| 数据  | 卷挂载 `/app/data`（仅 SQLite）；IP 库在镜像内 `/app/share/`，勿与数据卷混放                |
+| 权限  | 宿主机数据目录属主需为 `10001:10001`（见上文）                                          |
+| 管理员 | `ADMIN_USER` / `ADMIN_PASS`                                             |
+
+
+更多环境变量见 `[server/.env.example](server/.env.example)`。接口与开发说明见 `[server/README.md](server/README.md)`。
 
 ### 快速调用 API
 
@@ -93,6 +99,8 @@ curl -s -X POST http://127.0.0.1:8080/api/v1/links \
   -H 'Content-Type: application/json' \
   -d '{"url":"https://example.com","features":["encrypt","fake_page"]}'
 ```
+
+
 
 ## License
 
