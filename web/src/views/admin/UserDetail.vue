@@ -128,7 +128,7 @@ watch(page, async () => {
             <td>{{ item.visit_count }}</td>
             <td>{{ statusText(item.status) }}</td>
             <td>
-              <RouterLink :to="`/admin/links/${item.id}`">{{ t('links.detail') }}</RouterLink>
+              <RouterLink :to="`/admin/links/${item.id}`">{{ t('links.editTarget') }}</RouterLink>
             </td>
           </tr>
           <tr v-if="!links.length">

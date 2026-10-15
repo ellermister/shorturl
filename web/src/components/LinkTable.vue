@@ -15,6 +15,10 @@ const pageSize = 20
 const keyword = ref('')
 const loading = ref(false)
 const error = ref('')
+const editingId = ref(0)
+const editURL = ref('')
+const savingId = ref(0)
+const rowMsg = ref('')
 
 const detailBase = computed(() => (props.mode === 'me' ? '/me/links' : '/admin/links'))
 
@@ -44,6 +48,41 @@ function statusText(s) {
   return { 1: t('links.statusActive'), 0: t('links.statusDisabled'), 2: t('links.statusBurned') }[s] || String(s)
 }
 
+function startEdit(item) {
+  editingId.value = item.id
+  editURL.value = item.target_url || ''
+  rowMsg.value = ''
+  error.value = ''
+}
+
+function cancelEdit() {
+  editingId.value = 0
+  editURL.value = ''
+}
+
+async function saveTarget(item) {
+  const url = editURL.value.trim()
+  if (!url) {
+    error.value = t('home.needUrl')
+    return
+  }
+  savingId.value = item.id
+  error.value = ''
+  rowMsg.value = ''
+  try {
+    const updated = props.mode === 'me'
+      ? await api.meUpdateLink(item.id, { target_url: url })
+      : await api.adminUpdateLink(item.id, { target_url: url })
+    item.target_url = updated?.target_url || url
+    editingId.value = 0
+    rowMsg.value = t('links.saved')
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    savingId.value = 0
+  }
+}
+
 onMounted(load)
 watch(page, load)
 watch(() => props.mode, () => { page.value = 1; load() })
@@ -61,6 +100,7 @@ const pages = () => Math.max(1, Math.ceil(total.value / pageSize))
       </div>
     </div>
     <p v-if="error" class="err">{{ error }}</p>
+    <p v-if="rowMsg" class="ok">{{ rowMsg }}</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -87,12 +127,24 @@ const pages = () => Math.max(1, Math.ceil(total.value / pageSize))
               </RouterLink>
               <span v-else class="muted">{{ t('links.guest') }}</span>
             </td>
-            <td class="url" :title="item.target_url">{{ item.target_url }}</td>
+            <td class="url">
+              <template v-if="editingId === item.id">
+                <input v-model="editURL" type="url" :placeholder="t('links.editTargetPh')" />
+                <div class="edit-actions">
+                  <button type="button" class="primary" :disabled="savingId === item.id" @click="saveTarget(item)">
+                    {{ savingId === item.id ? t('common.loading') : t('links.save') }}
+                  </button>
+                  <button type="button" @click="cancelEdit">{{ t('links.cancel') }}</button>
+                </div>
+              </template>
+              <span v-else :title="item.target_url">{{ item.target_url }}</span>
+            </td>
             <td>{{ item.visit_count }}</td>
             <td>{{ statusText(item.status) }}</td>
             <td>{{ item.expires_at ? new Date(item.expires_at).toLocaleString() : t('links.never') }}</td>
             <td>{{ item.created_at ? new Date(item.created_at).toLocaleString() : '-' }}</td>
             <td class="actions">
+              <button v-if="mode === 'admin'" type="button" @click="startEdit(item)">{{ t('links.editTarget') }}</button>
               <RouterLink :to="`${detailBase}/${item.id}`">{{ t('links.detail') }}</RouterLink>
               <button type="button" @click="remove(item.id)">{{ t('links.delete') }}</button>
             </td>
@@ -159,10 +211,33 @@ th, td {
   border-bottom: 1px solid var(--line);
 }
 .url {
-  max-width: 18rem;
+  max-width: 22rem;
+}
+.url span {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.url input {
+  width: 100%;
+  min-width: 14rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.actions button.primary,
+.edit-actions button.primary {
+  background: #0f766e;
+  color: #fff;
+  border-color: #0f766e;
 }
 .actions {
   display: flex;
@@ -176,5 +251,6 @@ th, td {
   margin-top: 1rem;
 }
 .err { color: #b91c1c; }
+.ok { color: #0f766e; margin: 0 0 0.6rem; }
 .muted { opacity: 0.65; }
 </style>

@@ -318,9 +318,9 @@ onMounted(load)
       </p>
 
       <template v-if="canEdit">
-        <label class="edit">
-          <b>{{ t('links.target') }}</b>
-          <input v-model="editURL" type="url" />
+        <label class="edit target-box">
+          <b>{{ t('links.editTarget') }}</b>
+          <input v-model="editURL" type="url" :placeholder="t('links.editTargetPh')" />
         </label>
 
         <div class="edit">
@@ -533,6 +533,12 @@ onMounted(load)
   font: inherit;
   width: 100%;
   background: #f9fafb;
+}
+.target-box {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
 }
 .opts {
   display: flex;
